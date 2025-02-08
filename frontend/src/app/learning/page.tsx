@@ -7,6 +7,15 @@ import Link from "next/link";
 const LearningPage = () => {
   return (
     <div className="min-h-screen bg-white p-8 max-w-2xl mx-auto">
+      {/* Back Button */}
+      <Link 
+        href="/learning-path" 
+        className="inline-flex items-center text-[#612665] hover:underline mb-8"
+      >
+        <span className="mr-2">←</span>
+        Back to Learning Path
+      </Link>
+
       {/* Header and Welcome */}
       <div className="flex flex-col items-center mb-12">
         <div className="w-32 h-32 rounded-full overflow-hidden mb-6 bg-white p-2 shadow-lg">

@@ -18,6 +18,7 @@ declare global {
             disablekb?: number;
             rel?: number;
             modestbranding?: number;
+            start?: number;
           };
           events?: {
             onReady?: (event: YT.PlayerEvent) => void;
@@ -188,6 +189,9 @@ const BalanceSheetPage = () => {
   const quizQuestions = getQuizQuestions();
 
   useEffect(() => {
+    // Clear any stored progress when component mounts
+    sessionStorage.removeItem('videoProgress');
+
     // Load YouTube API
     const tag = document.createElement("script");
     tag.src = "https://www.youtube.com/iframe_api";
@@ -202,7 +206,8 @@ const BalanceSheetPage = () => {
           controls: 1,        // Show player controls
           disablekb: 1,      // Disable keyboard controls
           rel: 0,            // Don't show related videos
-          modestbranding: 1  // Show modest branding
+          modestbranding: 1, // Show modest branding
+          start: 0          // Always start from beginning
         },
         events: {
           onStateChange: onPlayerStateChange,
@@ -210,9 +215,17 @@ const BalanceSheetPage = () => {
         },
       });
     };
+
+    // Clear stored progress when component unmounts
+    return () => {
+      sessionStorage.removeItem('videoProgress');
+    };
   }, []);
 
   const onPlayerReady = (event: YT.PlayerEvent) => {
+    // Ensure video starts from beginning
+    playerRef.current?.seekTo(0, true);
+    
     // Add time update listener
     setInterval(() => {
       if (playerRef.current) {

@@ -45,8 +45,8 @@ export const ebitdaTranscript: TranscriptSegment[] = [
     }
   },
   {
-    startTime: 105,
-    endTime: 106,
+    startTime: 65,
+    endTime: 66,
     text: "Let's check your understanding of EBITDA calculations.",
     quiz: {
       questions: [
@@ -76,8 +76,8 @@ export const ebitdaTranscript: TranscriptSegment[] = [
     }
   },
   {
-    startTime: 170,
-    endTime: 171,
+    startTime: 106,
+    endTime: 107,
     text: "Let's review the pros of using EBITDA.",
     quiz: {
       questions: [
@@ -107,8 +107,8 @@ export const ebitdaTranscript: TranscriptSegment[] = [
     }
   },
   {
-    startTime: 250,
-    endTime: 251,
+    startTime: 150,
+    endTime: 151,
     text: "Let's examine the limitations of EBITDA.",
     quiz: {
       questions: [

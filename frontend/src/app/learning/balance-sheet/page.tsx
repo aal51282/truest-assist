@@ -86,6 +86,7 @@ const BalanceSheetPage = () => {
   const [incorrectAnswers, setIncorrectAnswers] = useState<number[]>([]);
   const [shortAnswer, setShortAnswer] = useState<string>("");
   const [quizBuffer, setQuizBuffer] = useState(false);
+  const [quizTimelineMarkers, setQuizTimelineMarkers] = useState<Array<{time: number, completed: boolean}>>([]);
   const playerRef = useRef<YT.Player | null>(null);
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -188,6 +189,15 @@ const BalanceSheetPage = () => {
 
   const quizQuestions = getQuizQuestions();
 
+  // Initialize quiz timeline markers
+  useEffect(() => {
+    const markers = quizQuestions.map(quiz => ({
+      time: quiz.timestamp,
+      completed: completedSections.includes(`quiz-${quiz.timestamp}`)
+    }));
+    setQuizTimelineMarkers(markers);
+  }, [completedSections]);
+
   useEffect(() => {
     // Clear any stored progress when component mounts
     sessionStorage.removeItem('videoProgress');
@@ -200,7 +210,7 @@ const BalanceSheetPage = () => {
 
     // Initialize YouTube player when API is ready
     window.onYouTubeIframeAPIReady = () => {
-      playerRef.current = new YT.Player("youtube-player", {
+      playerRef.current = new window.YT.Player("youtube-player", {
         videoId: "Sx2R6qS8ZJw",
         playerVars: {
           controls: 1,        // Show player controls
@@ -219,15 +229,18 @@ const BalanceSheetPage = () => {
     // Clear stored progress when component unmounts
     return () => {
       sessionStorage.removeItem('videoProgress');
+      if (checkIntervalRef.current) {
+        clearInterval(checkIntervalRef.current);
+      }
     };
   }, []);
 
-  const onPlayerReady = (event: YT.PlayerEvent) => {
+  const onPlayerReady = () => {
     // Ensure video starts from beginning
     playerRef.current?.seekTo(0, true);
     
     // Add time update listener
-    setInterval(() => {
+    const timeUpdateInterval = setInterval(() => {
       if (playerRef.current) {
         const currentTime = playerRef.current.getCurrentTime();
         const storedTime = Number(sessionStorage.getItem('videoProgress')) || 0;
@@ -241,9 +254,12 @@ const BalanceSheetPage = () => {
         }
       }
     }, 1000);
+
+    // Clean up interval on unmount
+    return () => clearInterval(timeUpdateInterval);
   };
 
-  const onPlayerStateChange = (event: YT.OnStateChangeEvent) => {
+  const onPlayerStateChange = (event: { data: number }) => {
     // Clear any existing interval
     if (checkIntervalRef.current) {
       clearInterval(checkIntervalRef.current);
@@ -258,15 +274,17 @@ const BalanceSheetPage = () => {
       playerRef.current?.seekTo(storedTime, true);
     }
 
-    if (event.data === YT.PlayerState.PLAYING) {
+    if (event.data === window.YT.PlayerState.PLAYING) {
       // Start checking for quiz timestamps
       checkIntervalRef.current = setInterval(() => {
-        const currentTime = playerRef.current?.getCurrentTime() || 0;
+        if (!playerRef.current) return;
+        
+        const currentTime = playerRef.current.getCurrentTime();
         const storedTime = Number(sessionStorage.getItem('videoProgress')) || 0;
         
         // Prevent rewinding
         if (currentTime < storedTime) {
-          playerRef.current?.seekTo(storedTime, true);
+          playerRef.current.seekTo(storedTime, true);
           return;
         }
 
@@ -280,7 +298,7 @@ const BalanceSheetPage = () => {
         );
 
         if (nextQuiz) {
-          playerRef.current?.pauseVideo();
+          playerRef.current.pauseVideo();
           setCurrentQuiz(nextQuiz);
           setCurrentQuestionIndex(0);
           setShowQuiz(true);
@@ -295,16 +313,6 @@ const BalanceSheetPage = () => {
       }, 500);
     }
   };
-
-  // Clean up on component unmount
-  useEffect(() => {
-    return () => {
-      if (checkIntervalRef.current) {
-        clearInterval(checkIntervalRef.current);
-        checkIntervalRef.current = null;
-      }
-    };
-  }, []);
 
   const handleAnswerSelect = (answerIndex: number) => {
     if (!currentQuiz || incorrectAnswers.includes(answerIndex)) return;
@@ -392,16 +400,26 @@ const BalanceSheetPage = () => {
 
           {/* Quiz Popup */}
           {showQuiz && currentQuiz && (
-            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-xl">
-              <div className="bg-white p-8 rounded-xl max-w-2xl w-full mx-4 shadow-2xl">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-2xl font-bold text-[#612665]">Pop Quiz!</h3>
-                  <span className="text-[#612665]">
-                    Question {currentQuestionIndex + 1} of {currentQuiz.questions.length}
-                  </span>
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white p-8 rounded-xl max-w-2xl w-full mx-4 shadow-2xl transform transition-all duration-300 scale-100 opacity-100">
+                {/* Quiz Progress Bar */}
+                <div className="absolute top-0 left-0 w-full h-1 bg-[#F3F0F4]">
+                  <div 
+                    className="h-full bg-[#612665] transition-all duration-300"
+                    style={{ width: `${((currentQuestionIndex + 1) / currentQuiz.questions.length) * 100}%` }}
+                  />
                 </div>
 
-                <p className="text-lg mb-6">{currentQuiz.questions[currentQuestionIndex].question}</p>
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-2xl font-bold text-[#612665]">Pop Quiz!</h3>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-[#612665] font-medium">
+                      Question {currentQuestionIndex + 1} of {currentQuiz.questions.length}
+                    </span>
+                  </div>
+                </div>
+
+                <p className="text-lg mb-6 text-[#612665]">{currentQuiz.questions[currentQuestionIndex].question}</p>
                 
                 <div className="space-y-4 mb-6">
                   {currentQuiz.questions[currentQuestionIndex].options.map((option, index) => (
@@ -409,49 +427,73 @@ const BalanceSheetPage = () => {
                       key={index}
                       onClick={() => handleAnswerSelect(index)}
                       disabled={incorrectAnswers.includes(index) || (showExplanation && isCorrect)}
-                      className={`w-full p-4 text-left rounded-lg border-2 transition-all
+                      className={`w-full p-4 text-left rounded-lg border-2 transition-all duration-300
                         ${incorrectAnswers.includes(index)
                           ? 'border-red-500 bg-red-50 opacity-50 cursor-not-allowed'
                           : selectedAnswer === index 
                             ? isCorrect 
-                              ? 'border-green-500 bg-green-50'
+                              ? 'border-green-500 bg-green-50 animate-pulse'
                               : 'border-red-500 bg-red-50'
-                            : 'border-[#F3F0F4] hover:border-[#612665]'
+                            : 'border-[#F3F0F4] hover:border-[#612665] hover:shadow-md'
                         }
                       `}
                     >
-                      {option}
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center
+                          ${selectedAnswer === index && isCorrect
+                            ? 'bg-green-500 text-white'
+                            : selectedAnswer === index
+                              ? 'bg-red-500 text-white'
+                              : 'border-2 border-[#612665]'
+                          }`}
+                        >
+                          {selectedAnswer === index && isCorrect && (
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
+                        <span>{option}</span>
+                      </div>
                     </button>
                   ))}
                 </div>
 
-                {shortAnswer && !isCorrect && (
-                  <div className="p-4 rounded-lg mb-6 bg-yellow-50 text-yellow-800">
-                    <p>{shortAnswer}</p>
+                {showExplanation && (
+                  <div
+                    className={`p-4 rounded-lg mb-6 ${
+                      isCorrect
+                        ? "bg-green-50 text-green-800"
+                        : "bg-red-50 text-red-800"
+                    }`}
+                  >
+                    <p className="font-semibold mb-2">
+                      {isCorrect ? "Correct!" : "Not quite right."}
+                    </p>
+                    <p>
+                      {currentQuiz.questions[currentQuestionIndex].explanation}
+                    </p>
                   </div>
                 )}
 
-                {showExplanation && isCorrect && (
-                  <div className="p-4 rounded-lg mb-6 bg-green-50 text-green-800">
-                    <p className="font-semibold mb-2">Correct!</p>
-                    <p>{currentQuiz.questions[currentQuestionIndex].explanation}</p>
-                  </div>
-                )}
-
-                {showExplanation && isCorrect && (
+                {showExplanation && (
                   <button
                     onClick={handleNextQuestion}
                     className="w-full py-3 px-4 bg-[#612665] text-white rounded-lg hover:bg-[#4d1e51] transition-colors"
                   >
-                    {currentQuestionIndex < currentQuiz.questions.length - 1 ? 'Next Question' : 'Continue Video'}
+                    {currentQuestionIndex < currentQuiz.questions.length - 1
+                      ? "Next Question"
+                      : "Continue Video"}
                   </button>
                 )}
 
-                {showExplanation && currentQuestionIndex === currentQuiz.questions.length - 1 && (
-                  <div className="mt-4 text-center text-[#612665]">
-                    Quiz Score: {quizScores[currentQuiz.timestamp] || 0} / {currentQuiz.questions.length}
-                  </div>
-                )}
+                {showExplanation &&
+                  currentQuestionIndex === currentQuiz.questions.length - 1 && (
+                    <div className="mt-4 text-center text-[#612665]">
+                      Quiz Score: {quizScores[currentQuiz.timestamp] || 0} /{" "}
+                      {currentQuiz.questions.length}
+                    </div>
+                  )}
               </div>
             </div>
           )}
@@ -478,63 +520,6 @@ const BalanceSheetPage = () => {
               }}
             />
           </div>
-        </div>
-
-        {/* Content Sections */}
-        <div className="space-y-4">
-          {contentSections.map((section) => (
-            <Link key={section.id} href={section.path}>
-              <div
-                className={`p-6 border-2 ${
-                  completedSections.includes(section.id)
-                    ? "border-[#612665] bg-[#F3F0F4]"
-                    : "border-[#F3F0F4]"
-                } rounded-xl hover:border-[#612665] hover:shadow-lg transition-all cursor-pointer`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    {/* Status Icon */}
-                    <div
-                      className={`w-6 h-6 rounded-full flex items-center justify-center
-                      ${
-                        completedSections.includes(section.id)
-                          ? "bg-[#612665] text-white"
-                          : "border-2 border-[#612665]"
-                      }`}
-                    >
-                      {completedSections.includes(section.id) && (
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                      )}
-                    </div>
-
-                    {/* Title */}
-                    <h3 className="text-lg font-semibold text-[#612665]">
-                      {section.title}
-                    </h3>
-                  </div>
-
-                  {/* Game Badge */}
-                  {section.hasGame && (
-                    <span className="px-3 py-1 text-sm bg-[#612665] text-white rounded-full">
-                      Interactive
-                    </span>
-                  )}
-                </div>
-              </div>
-            </Link>
-          ))}
         </div>
       </div>
     </div>

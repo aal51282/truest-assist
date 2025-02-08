@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { getQuizQuestions } from "@/data/transcripts/ebitda";
+import { getQuizQuestions, getDepreciationQuizQuestions } from "@/data/transcripts/ebitda";
 import ReactConfetti from 'react-confetti';
 import { useRouter } from "next/navigation";
 
@@ -96,6 +96,8 @@ const EBITDAPage = () => {
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const router = useRouter();
+  const [currentVideo, setCurrentVideo] = useState<'ebitda' | 'depreciation'>('ebitda');
+  const [videoEnded, setVideoEnded] = useState(false);
 
   const contentSections: ContentSection[] = [
     {
@@ -151,44 +153,61 @@ const EBITDAPage = () => {
     },
   ];
 
-  const quizQuestions = getQuizQuestions();
+  const quizQuestions = currentVideo === 'ebitda' 
+    ? getQuizQuestions()
+    : getDepreciationQuizQuestions();
 
   // Initialize quiz timeline markers
   useEffect(() => {
     const markers = quizQuestions.map(quiz => ({
       time: quiz.timestamp,
-      completed: completedSections.includes(`quiz-${quiz.timestamp}`)
+      completed: completedSections.includes(`quiz-${currentVideo}-${quiz.timestamp}`)
     }));
     setQuizTimelineMarkers(markers);
-  }, [completedSections]);
+  }, [completedSections, currentVideo]);
+
+  // Add new function to handle video transition
+  const initializePlayer = () => {
+    // Destroy existing player if it exists
+    if (playerRef.current) {
+      playerRef.current.destroy();
+      playerRef.current = null;
+    }
+
+    const videoId = currentVideo === 'ebitda' ? "I7ND6z5eXmo" : "rE9Tc29A-fU";
+    playerRef.current = new window.YT.Player("youtube-player", {
+      videoId,
+      playerVars: {
+        controls: 1,
+        disablekb: 1,
+        rel: 0,
+        modestbranding: 1,
+        start: 0
+      },
+      events: {
+        onStateChange: onPlayerStateChange,
+        onReady: onPlayerReady,
+      },
+    });
+  };
 
   useEffect(() => {
     // Clear any stored progress when component mounts
     sessionStorage.removeItem('videoProgress');
 
-    // Load YouTube API
-    const tag = document.createElement("script");
-    tag.src = "https://www.youtube.com/iframe_api";
-    const firstScriptTag = document.getElementsByTagName("script")[0];
-    firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+    // Load YouTube API only if not already loaded
+    if (!window.YT) {
+      const tag = document.createElement("script");
+      tag.src = "https://www.youtube.com/iframe_api";
+      const firstScriptTag = document.getElementsByTagName("script")[0];
+      firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
 
-    // Initialize YouTube player when API is ready
-    window.onYouTubeIframeAPIReady = () => {
-      playerRef.current = new window.YT.Player("youtube-player", {
-        videoId: "I7ND6z5eXmo", // EBITDA video ID
-        playerVars: {
-          controls: 1,
-          disablekb: 1,
-          rel: 0,
-          modestbranding: 1,
-          start: 0
-        },
-        events: {
-          onStateChange: onPlayerStateChange,
-          onReady: onPlayerReady,
-        },
-      });
-    };
+      // Initialize YouTube player when API is ready
+      window.onYouTubeIframeAPIReady = initializePlayer;
+    } else {
+      // If API is already loaded, initialize player directly
+      initializePlayer();
+    }
 
     // Initialize audio element
     audioRef.current = new Audio('/celebration.mp3');
@@ -199,8 +218,11 @@ const EBITDAPage = () => {
       if (checkIntervalRef.current) {
         clearInterval(checkIntervalRef.current);
       }
+      if (playerRef.current) {
+        playerRef.current.destroy();
+      }
     };
-  }, []);
+  }, [currentVideo]); // Re-run when video changes
 
   const onPlayerReady = () => {
     playerRef.current?.seekTo(0, true);
@@ -234,6 +256,23 @@ const EBITDAPage = () => {
       playerRef.current?.seekTo(storedTime, true);
     }
 
+    // Handle video end
+    if (event.data === window.YT.PlayerState.ENDED) {
+      if (currentVideo === 'ebitda') {
+        setVideoEnded(true);
+        // Switch to depreciation video after a short delay
+        setTimeout(() => {
+          setCurrentVideo('depreciation');
+          // Reset progress
+          sessionStorage.removeItem('videoProgress');
+        }, 1000);
+      } else {
+        // Both videos completed
+        handleCompleteModule();
+      }
+      return;
+    }
+
     if (event.data === window.YT.PlayerState.PLAYING) {
       checkIntervalRef.current = setInterval(() => {
         if (!playerRef.current) return;
@@ -251,7 +290,7 @@ const EBITDAPage = () => {
         const nextQuiz = quizQuestions.find(
           (q) =>
             Math.abs(q.timestamp - currentTime) < 0.5 &&
-            !completedSections.includes(`quiz-${q.timestamp}`)
+            !completedSections.includes(`quiz-${currentVideo}-${q.timestamp}`)
         );
 
         if (nextQuiz) {
@@ -312,7 +351,7 @@ const EBITDAPage = () => {
         setShowCelebration(false);
         
         const currentTime = playerRef.current?.getCurrentTime() || 0;
-        const quizId = `quiz-${currentQuiz.timestamp}`;
+        const quizId = `quiz-${currentVideo}-${currentQuiz.timestamp}`;
         
         setCompletedSections(prev => 
           prev.includes(quizId) ? prev : [...prev, quizId]
@@ -407,8 +446,17 @@ const EBITDAPage = () => {
 
       <div className="max-w-7xl mx-auto px-4">
         <h1 className="text-4xl font-bold text-[#612665] mb-6">
-          EBITDA Calculation
+          {currentVideo === 'ebitda' ? 'EBITDA Calculation' : 'Depreciation vs Amortization'}
         </h1>
+
+        {/* Video transition message */}
+        {videoEnded && (
+          <div className="mb-6 p-4 bg-[#F3F0F4] rounded-lg text-[#612665]">
+            <p className="text-lg">
+              Great job! Now let's learn about the difference between Depreciation and Amortization.
+            </p>
+          </div>
+        )}
 
         <div className="mb-12 relative">
           <div className="relative" style={{ paddingBottom: "56.25%" }}>

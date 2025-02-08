@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 
 interface ContentSection {
@@ -11,9 +11,23 @@ interface ContentSection {
   path: string;
 }
 
+interface QuizQuestion {
+  timestamp: number;
+  question: string;
+  options: string[];
+  correctAnswer: number;
+  explanation: string;
+}
+
 const BalanceSheetPage = () => {
   const [activeSection, setActiveSection] = useState<string>('');
   const [completedSections, setCompletedSections] = useState<string[]>([]);
+  const [showQuiz, setShowQuiz] = useState(false);
+  const [currentQuiz, setCurrentQuiz] = useState<QuizQuestion | null>(null);
+  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [showExplanation, setShowExplanation] = useState(false);
+  const [isCorrect, setIsCorrect] = useState(false);
+  const playerRef = useRef<YT.Player | null>(null);
 
   const contentSections: ContentSection[] = [
     { id: 'equation', title: 'Balance Sheet Equation', isCompleted: false, path: '/learning/balance-sheet/equation' },
@@ -33,6 +47,85 @@ const BalanceSheetPage = () => {
     { id: 'quiz', title: 'Quiz 1', isCompleted: false, hasGame: true, path: '/learning/balance-sheet/quiz' },
   ];
 
+  // Example quiz questions at specific timestamps
+  const quizQuestions: QuizQuestion[] = [
+    {
+      timestamp: 30, // 30 seconds into the video
+      question: "What is the basic accounting equation?",
+      options: [
+        "Assets = Liabilities + Owner's Equity",
+        "Assets = Liabilities - Owner's Equity",
+        "Assets + Liabilities = Owner's Equity",
+        "Assets - Liabilities = Owner's Equity"
+      ],
+      correctAnswer: 0,
+      explanation: "The basic accounting equation states that Assets = Liabilities + Owner's Equity, showing that everything a company owns (assets) is financed through either debt (liabilities) or equity."
+    }
+    // Add more questions with different timestamps
+  ];
+
+  useEffect(() => {
+    // Load YouTube API
+    const tag = document.createElement('script');
+    tag.src = 'https://www.youtube.com/iframe_api';
+    const firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+
+    // Initialize YouTube player when API is ready
+    window.onYouTubeIframeAPIReady = () => {
+      playerRef.current = new YT.Player('youtube-player', {
+        videoId: 'Sx2R6qS8ZJw',
+        events: {
+          onStateChange: onPlayerStateChange,
+          onReady: onPlayerReady
+        }
+      });
+    };
+  }, []);
+
+  const onPlayerReady = (event: YT.PlayerEvent) => {
+    // Player is ready
+  };
+
+  const onPlayerStateChange = (event: YT.OnStateChangeEvent) => {
+    if (event.data === YT.PlayerState.PLAYING) {
+      // Start checking for quiz timestamps
+      const checkTime = setInterval(() => {
+        const currentTime = playerRef.current?.getCurrentTime() || 0;
+        const nextQuiz = quizQuestions.find(q => 
+          Math.abs(q.timestamp - currentTime) < 0.5 && 
+          !completedSections.includes(`quiz-${q.timestamp}`)
+        );
+
+        if (nextQuiz) {
+          playerRef.current?.pauseVideo();
+          setCurrentQuiz(nextQuiz);
+          setShowQuiz(true);
+          clearInterval(checkTime);
+        }
+      }, 500);
+
+      return () => clearInterval(checkTime);
+    }
+  };
+
+  const handleAnswerSelect = (answerIndex: number) => {
+    setSelectedAnswer(answerIndex);
+    setIsCorrect(answerIndex === currentQuiz?.correctAnswer);
+    setShowExplanation(true);
+  };
+
+  const handleContinue = () => {
+    if (currentQuiz) {
+      setCompletedSections([...completedSections, `quiz-${currentQuiz.timestamp}`]);
+    }
+    setShowQuiz(false);
+    setCurrentQuiz(null);
+    setSelectedAnswer(null);
+    setShowExplanation(false);
+    playerRef.current?.playVideo();
+  };
+
   return (
     <div className="min-h-screen bg-white p-8">
       {/* Back Button */}
@@ -49,16 +142,63 @@ const BalanceSheetPage = () => {
         <h1 className="text-4xl font-bold text-[#612665] mb-6">Balance Sheet Analysis</h1>
 
         {/* Video Section */}
-        <div className="mb-12">
+        <div className="mb-12 relative">
           <div className="relative" style={{ paddingBottom: '56.25%' }}>
-            <iframe
-              src="https://www.youtube.com/embed/Sx2R6qS8ZJw"
-              title="Balance Sheet Basics"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
+            <div
+              id="youtube-player"
               className="absolute top-0 left-0 w-full h-full rounded-xl shadow-lg"
             />
           </div>
+
+          {/* Quiz Popup */}
+          {showQuiz && currentQuiz && (
+            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-xl">
+              <div className="bg-white p-8 rounded-xl max-w-2xl w-full mx-4 shadow-2xl">
+                <h3 className="text-2xl font-bold text-[#612665] mb-4">Pop Quiz!</h3>
+                <p className="text-lg mb-6">{currentQuiz.question}</p>
+                
+                <div className="space-y-4 mb-6">
+                  {currentQuiz.options.map((option, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleAnswerSelect(index)}
+                      disabled={showExplanation}
+                      className={`w-full p-4 text-left rounded-lg border-2 transition-all
+                        ${selectedAnswer === index 
+                          ? isCorrect 
+                            ? 'border-green-500 bg-green-50'
+                            : 'border-red-500 bg-red-50'
+                          : 'border-[#F3F0F4] hover:border-[#612665]'
+                        }
+                      `}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+
+                {showExplanation && (
+                  <div className={`p-4 rounded-lg mb-6 ${
+                    isCorrect ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
+                  }`}>
+                    <p className="font-semibold mb-2">
+                      {isCorrect ? 'Correct!' : 'Not quite right.'}
+                    </p>
+                    <p>{currentQuiz.explanation}</p>
+                  </div>
+                )}
+
+                {showExplanation && (
+                  <button
+                    onClick={handleContinue}
+                    className="w-full py-3 px-4 bg-[#612665] text-white rounded-lg hover:bg-[#4d1e51] transition-colors"
+                  >
+                    Continue Video
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Progress Bar */}

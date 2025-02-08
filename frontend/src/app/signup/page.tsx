@@ -1,47 +1,43 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import Logo from '@/components/Logo';
-import Input from '@/components/Input';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import GoalsSelection from '@/components/GoalsSelection';
+import React, { useState } from "react";
+import Logo from "@/components/Logo";
+import Input from "@/components/Input";
+import Link from "next/link";
+import GoalsSelection from "@/components/GoalsSelection";
 
 export default function SignUp() {
-  const router = useRouter();
   const [step, setStep] = useState(1);
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    userId: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
+    firstName: "",
+    lastName: "",
+    userId: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleGoalToggle = (goalId: string) => {
-    setSelectedGoals(prev => 
+    setSelectedGoals((prev) =>
       prev.includes(goalId)
-        ? prev.filter(id => id !== goalId)
+        ? prev.filter((id) => id !== goalId)
         : [...prev, goalId]
     );
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (step === 1) {
       setStep(2);
     } else {
       // Handle final submission with both formData and selectedGoals
       console.log({ ...formData, goals: selectedGoals });
-      // Redirect to learning path page
-      router.push('/learning-path');
     }
   };
 
@@ -67,10 +63,14 @@ export default function SignUp() {
           {step === 1 ? (
             <>
               <div className="text-center mb-8">
-                <h1 className="text-3xl font-bold text-[#612665] mb-2">Create Your Account</h1>
-                <p className="text-[#b8a3be]">Start your journey to financial mastery</p>
+                <h1 className="text-3xl font-bold text-[#612665] mb-2">
+                  Create Your Account
+                </h1>
+                <p className="text-[#b8a3be]">
+                  Start your journey to financial mastery
+                </p>
               </div>
-              
+
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-2 gap-4">
                   <Input
@@ -82,7 +82,7 @@ export default function SignUp() {
                     value={formData.firstName}
                     onChange={handleInputChange}
                   />
-                  
+
                   <Input
                     label="Last Name"
                     type="text"
@@ -113,7 +113,7 @@ export default function SignUp() {
                   value={formData.email}
                   onChange={handleInputChange}
                 />
-                
+
                 <Input
                   label="Password"
                   type="password"
@@ -123,7 +123,7 @@ export default function SignUp() {
                   value={formData.password}
                   onChange={handleInputChange}
                 />
-                
+
                 <Input
                   label="Confirm Password"
                   type="password"
@@ -133,7 +133,7 @@ export default function SignUp() {
                   value={formData.confirmPassword}
                   onChange={handleInputChange}
                 />
-                
+
                 <div className="flex items-center">
                   <input
                     type="checkbox"
@@ -142,17 +142,17 @@ export default function SignUp() {
                     className="h-4 w-4 rounded border-purple-300 text-[#612665] focus:ring-[#612665]"
                   />
                   <label htmlFor="terms" className="ml-2 text-sm text-gray-600">
-                    I agree to the{' '}
+                    I agree to the{" "}
                     <a href="#" className="text-[#612665] hover:underline">
                       Terms of Service
-                    </a>{' '}
-                    and{' '}
+                    </a>{" "}
+                    and{" "}
                     <a href="#" className="text-[#612665] hover:underline">
                       Privacy Policy
                     </a>
                   </label>
                 </div>
-                
+
                 <button
                   type="submit"
                   className="w-full py-3 px-4 bg-[#612665] text-white rounded-lg hover:bg-[#4d1e51] transition-colors text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-[#612665] focus:ring-offset-2"
@@ -167,7 +167,7 @@ export default function SignUp() {
                 selectedGoals={selectedGoals}
                 onGoalToggle={handleGoalToggle}
               />
-              
+
               <button
                 type="submit"
                 className="w-full py-3 px-4 bg-[#612665] text-white rounded-lg hover:bg-[#4d1e51] transition-colors text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-[#612665] focus:ring-offset-2"
@@ -176,12 +176,15 @@ export default function SignUp() {
               </button>
             </form>
           )}
-          
+
           {step === 1 && (
             <div className="mt-8 text-center">
               <p className="text-gray-600">
-                Already have an account?{' '}
-                <Link href="/login" className="text-[#612665] font-semibold hover:underline">
+                Already have an account?{" "}
+                <Link
+                  href="/login"
+                  className="text-[#612665] font-semibold hover:underline"
+                >
                   LOGIN
                 </Link>
               </p>
@@ -191,4 +194,4 @@ export default function SignUp() {
       </main>
     </div>
   );
-} 
+}

@@ -89,6 +89,7 @@ const BalanceSheetPage = () => {
   const [quizBuffer, setQuizBuffer] = useState(false);
   const [quizTimelineMarkers, setQuizTimelineMarkers] = useState<Array<{time: number, completed: boolean}>>([]);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const playerRef = useRef<YT.Player | null>(null);
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -347,7 +348,7 @@ const BalanceSheetPage = () => {
   };
 
   const handleNextQuestion = () => {
-    if (!currentQuiz || !isCorrect) return;
+    if (!currentQuiz || !isCorrect || isSubmitting) return;
 
     if (currentQuestionIndex < currentQuiz.questions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
@@ -356,9 +357,12 @@ const BalanceSheetPage = () => {
       setIncorrectAnswers([]);
       setShortAnswer("");
     } else {
+      // Prevent multiple submissions
+      setIsSubmitting(true);
+      
       // Quiz completed - Start celebration
       setShowCelebration(true);
-      playCelebrationSound(); // Play the celebration sound
+      playCelebrationSound();
       
       // Stop celebration after 3 seconds
       setTimeout(() => {
@@ -366,7 +370,13 @@ const BalanceSheetPage = () => {
         
         // Continue with quiz completion logic
         const currentTime = playerRef.current?.getCurrentTime() || 0;
-        setCompletedSections(prev => [...prev, `quiz-${currentQuiz.timestamp}`]);
+        const quizId = `quiz-${currentQuiz.timestamp}`;
+        
+        // Only add to completed sections if not already completed
+        setCompletedSections(prev => 
+          prev.includes(quizId) ? prev : [...prev, quizId]
+        );
+        
         setShowQuiz(false);
         setCurrentQuiz(null);
         setCurrentQuestionIndex(0);
@@ -374,6 +384,7 @@ const BalanceSheetPage = () => {
         setShowExplanation(false);
         setIncorrectAnswers([]);
         setShortAnswer("");
+        setIsSubmitting(false);
         
         // Set buffer and clear it after 2 seconds
         setQuizBuffer(true);
@@ -516,11 +527,26 @@ const BalanceSheetPage = () => {
                 {showExplanation && (
                   <button
                     onClick={handleNextQuestion}
-                    className="w-full py-3 px-4 bg-[#612665] text-white rounded-lg hover:bg-[#4d1e51] transition-colors"
+                    disabled={isSubmitting}
+                    className={`w-full py-3 px-4 bg-[#612665] text-white rounded-lg transition-colors ${
+                      isSubmitting 
+                        ? 'opacity-50 cursor-not-allowed'
+                        : 'hover:bg-[#4d1e51]'
+                    }`}
                   >
-                    {currentQuestionIndex < currentQuiz.questions.length - 1
-                      ? "Next Question"
-                      : "Continue Video"}
+                    {isSubmitting ? (
+                      <span className="flex items-center justify-center">
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Processing...
+                      </span>
+                    ) : currentQuestionIndex < currentQuiz.questions.length - 1 ? (
+                      "Next Question"
+                    ) : (
+                      "Continue Video"
+                    )}
                   </button>
                 )}
 

@@ -362,8 +362,11 @@ const BalanceSheetPage = () => {
       
       // Set buffer and clear it after 2 seconds
       setQuizBuffer(true);
-      // Ensure we're at the right timestamp before playing
-      playerRef.current?.seekTo(currentTime + 0.5, true);
+      
+      // Ensure we're well past the quiz timestamp to prevent re-triggering
+      const skipForwardTime = currentTime + 2;
+      playerRef.current?.seekTo(skipForwardTime, true);
+      sessionStorage.setItem('videoProgress', String(skipForwardTime));
       playerRef.current?.playVideo();
       
       setTimeout(() => {

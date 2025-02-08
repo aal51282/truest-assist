@@ -44,19 +44,19 @@ const BalanceSheetPage = () => {
         Back to Learning
       </Link>
 
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-7xl mx-auto px-4">
         {/* Title */}
         <h1 className="text-4xl font-bold text-[#612665] mb-6">Balance Sheet Analysis</h1>
 
         {/* Video Section */}
-        <div className="mb-12 rounded-xl overflow-hidden shadow-lg">
-          <div className="aspect-w-16 aspect-h-9">
+        <div className="mb-12">
+          <div className="relative" style={{ paddingBottom: '56.25%' }}>
             <iframe
               src="https://www.youtube.com/embed/Sx2R6qS8ZJw"
               title="Balance Sheet Basics"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
-              className="w-full h-full"
+              className="absolute top-0 left-0 w-full h-full rounded-xl shadow-lg"
             />
           </div>
         </div>

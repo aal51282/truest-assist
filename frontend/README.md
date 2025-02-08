@@ -1,36 +1,116 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Truest Assist - Financial Analysis Gamification Platform
 
-## Getting Started
+A gamified platform that helps employees understand and analyze financial metrics through interactive learning and real-world data analysis.
 
-First, run the development server:
+## 🎯 Overview
 
+Truest Assist transforms complex financial analysis into an engaging, game-like experience. Users can learn about financial metrics, analyze real company data, and earn rewards while building their financial acumen.
+
+## ✨ Key Features
+
+### 🎮 Interactive Learning Modules
+
+- **Balance Sheet Basics**
+  - Interactive tutorials on income, revenue, profit
+  - Visual breakdowns of assets, liabilities, and equity
+  - Practice exercises with real-world examples
+
+- **EBITDA Analysis**
+  - Step-by-step EBITDA calculation guide
+  - Interactive calculator with tooltips
+  - Visualization of operating income, depreciation, and amortization
+
+- **Comparative Analysis**
+  - Historical trend visualization
+  - Cross-company metric comparison
+  - Industry benchmark analysis
+
+### 📊 Analysis Tools
+
+- Document upload and parsing for financial statements
+- Automated data extraction and processing
+- Custom metric calculators
+- Interactive data visualization dashboards
+- Company comparison tools
+
+### 🏆 Gamification Elements
+
+- Achievement-based progression system
+- Skill badges and certifications
+- Points system for completed analyses
+- Leaderboards and challenges
+- Progress tracking and milestones
+
+## 🛠 Tech Stack
+
+### Frontend
+- Next.js 14
+- TypeScript
+- TailwindCSS
+
+### Backend
+- Python FastAPI
+- MongoDB for data storage
+
+### Infrastructure
+- Docker for containerization
+- AWS/Vercel for deployment
+- GitHub Actions for CI/CD
+
+## 🚀 Getting Started
+
+### Installation
+
+1. Clone the repository
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/aal51282/ugahacks2025
+cd ugahacks2025
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install frontend dependencies
+```bash
+cd frontend
+pnpm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Install backend dependencies
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # or `venv\Scripts\activate` on Windows
+pip install -r requirements.txt
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. Set up environment variables
+```bash
+cp frontend/.env.example frontend/.env
+cp backend/.env.example backend/.env
+```
 
-## Learn More
+5. Start development servers
 
-To learn more about Next.js, take a look at the following resources:
+Frontend:
+```bash
+cd frontend
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Backend:
+```bash
+cd backend
+uvicorn main:app --reload
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📱 Usage
 
-## Deploy on Vercel
+1. Register an account and complete your profile
+2. Start with the Balance Sheet Basics module
+3. Progress through interactive lessons
+4. Upload financial documents for analysis
+5. Earn points and badges as you complete tasks
+6. Compare your analysis with peers
+7. Track your progress on the leaderboard
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 📄 License
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

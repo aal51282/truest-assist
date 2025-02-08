@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { getQuizQuestions } from "@/data/transcripts/balance-sheet";
 import ReactConfetti from 'react-confetti';
+import { useRouter } from "next/navigation";
 
 // YouTube IFrame API TypeScript declarations
 declare global {
@@ -90,9 +91,11 @@ const BalanceSheetPage = () => {
   const [quizTimelineMarkers, setQuizTimelineMarkers] = useState<Array<{time: number, completed: boolean}>>([]);
   const [showCelebration, setShowCelebration] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
   const playerRef = useRef<YT.Player | null>(null);
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const router = useRouter();
 
   const contentSections: ContentSection[] = [
     {
@@ -409,6 +412,22 @@ const BalanceSheetPage = () => {
     }
   };
 
+  const handleCompleteModule = () => {
+    // Mark all sections as completed
+    const allSectionIds = contentSections.map(section => section.id);
+    setCompletedSections(allSectionIds);
+    
+    // Show celebration and play sound
+    setShowCelebration(true);
+    playCelebrationSound();
+    
+    // Show completion modal after a short delay
+    setTimeout(() => {
+      setShowCompletionModal(true);
+      setShowCelebration(false);
+    }, 3000);
+  };
+
   return (
     <div className="min-h-screen bg-white p-8">
       {showCelebration && (
@@ -420,6 +439,30 @@ const BalanceSheetPage = () => {
           colors={['#612665', '#4d1e51', '#b8a3be', '#F3F0F4']}
           style={{ position: 'fixed', top: 0, left: 0, zIndex: 100 }}
         />
+      )}
+
+      {/* Completion Modal */}
+      {showCompletionModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[200]">
+          <div className="bg-white p-8 rounded-xl max-w-md w-full mx-4 shadow-2xl text-center">
+            <div className="text-6xl mb-4">🎸</div>
+            <h2 className="text-2xl font-bold text-[#612665] mb-4">
+              Congratulations!
+            </h2>
+            <p className="text-[#b8a3be] mb-6">
+              You've completed the Balance Sheet Analysis module! You're now ready to tackle real-world financial analysis. Now it's time to learn about EBITDA Calculation!
+            </p>
+            <button
+              onClick={() => {
+                setShowCompletionModal(false);
+                router.push('/learning');
+              }}
+              className="w-full py-3 px-4 bg-[#612665] text-white rounded-lg hover:bg-[#4d1e51] transition-colors"
+            >
+              Continue Learning
+            </button>
+          </div>
+        </div>
       )}
       
       {/* Back Button */}
@@ -566,12 +609,22 @@ const BalanceSheetPage = () => {
         <div className="mb-8">
           <div className="flex justify-between text-sm text-[#612665] mb-2">
             <span>Progress</span>
-            <span>
-              {Math.round(
-                (completedSections.length / contentSections.length) * 100
+            <div className="flex items-center gap-4">
+              <span>
+                {Math.round(
+                  (completedSections.length / contentSections.length) * 100
+                )}
+                %
+              </span>
+              {process.env.NODE_ENV === 'development' && (
+                <button
+                  onClick={handleCompleteModule}
+                  className="text-xs px-2 py-1 bg-[#612665] text-white rounded hover:bg-[#4d1e51] transition-colors"
+                >
+                  Complete Module
+                </button>
               )}
-              %
-            </span>
+            </div>
           </div>
           <div className="w-full h-2 bg-[#F3F0F4] rounded-full">
             <div

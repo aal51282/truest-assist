@@ -96,6 +96,7 @@ const BalanceSheetPage = () => {
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const router = useRouter();
+  const [videoEnded, setVideoEnded] = useState(false);
 
   const contentSections: ContentSection[] = [
     {
@@ -271,18 +272,23 @@ const BalanceSheetPage = () => {
   };
 
   const onPlayerStateChange = (event: { data: number }) => {
-    // Clear any existing interval
     if (checkIntervalRef.current) {
       clearInterval(checkIntervalRef.current);
       checkIntervalRef.current = null;
     }
 
-    // Handle seeking attempts
     const currentTime = playerRef.current?.getCurrentTime() || 0;
     const storedTime = Number(sessionStorage.getItem('videoProgress')) || 0;
     
     if (currentTime < storedTime) {
       playerRef.current?.seekTo(storedTime, true);
+    }
+
+    // Handle video end
+    if (event.data === window.YT.PlayerState.ENDED) {
+      setVideoEnded(true);
+      handleCompleteModule();
+      return;
     }
 
     if (event.data === window.YT.PlayerState.PLAYING) {

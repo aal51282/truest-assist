@@ -1,7 +1,49 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
+import React, { useState, useEffect, useRef } from "react";
+import Link from "next/link";
+import { getQuizQuestions } from "@/data/transcripts/balance-sheet";
+
+// YouTube IFrame API TypeScript declarations
+declare global {
+  interface Window {
+    onYouTubeIframeAPIReady: () => void;
+    YT: {
+      Player: new (
+        elementId: string,
+        config: {
+          videoId: string;
+          events?: {
+            onReady?: (event: YT.PlayerEvent) => void;
+            onStateChange?: (event: YT.OnStateChangeEvent) => void;
+          };
+        }
+      ) => YT.Player;
+      PlayerState: {
+        PLAYING: number;
+        PAUSED: number;
+        ENDED: number;
+      };
+    };
+  }
+
+  namespace YT {
+    interface Player {
+      playVideo(): void;
+      pauseVideo(): void;
+      getCurrentTime(): number;
+    }
+
+    interface PlayerEvent {
+      target: Player;
+    }
+
+    interface OnStateChangeEvent {
+      target: Player;
+      data: number;
+    }
+  }
+}
 
 interface ContentSection {
   id: string;
@@ -12,73 +54,144 @@ interface ContentSection {
 }
 
 interface QuizQuestion {
-  timestamp: number;
   question: string;
   options: string[];
   correctAnswer: number;
   explanation: string;
 }
 
+interface Quiz {
+  timestamp: number;
+  questions: QuizQuestion[];
+}
+
 const BalanceSheetPage = () => {
-  const [activeSection, setActiveSection] = useState<string>('');
+  const [activeSection, setActiveSection] = useState<string>("");
   const [completedSections, setCompletedSections] = useState<string[]>([]);
   const [showQuiz, setShowQuiz] = useState(false);
-  const [currentQuiz, setCurrentQuiz] = useState<QuizQuestion | null>(null);
+  const [currentQuiz, setCurrentQuiz] = useState<Quiz | null>(null);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
+  const [quizScores, setQuizScores] = useState<{ [key: number]: number }>({});
   const playerRef = useRef<YT.Player | null>(null);
+  const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const contentSections: ContentSection[] = [
-    { id: 'equation', title: 'Balance Sheet Equation', isCompleted: false, path: '/learning/balance-sheet/equation' },
-    { id: 'cash', title: 'Cash and Accounts Receivable', isCompleted: false, path: '/learning/balance-sheet/cash-ar' },
-    { id: 'inventory', title: 'Inventory', isCompleted: false, path: '/learning/balance-sheet/inventory' },
-    { id: 'inventory-game', title: '(mini Game)', isCompleted: false, hasGame: true, path: '/learning/balance-sheet/inventory-game' },
-    { id: 'prepaid', title: 'Prepaid Expenses', isCompleted: false, path: '/learning/balance-sheet/prepaid' },
-    { id: 'ppe', title: 'Property, Plant, and Equipment', isCompleted: false, path: '/learning/balance-sheet/ppe' },
-    { id: 'ppe-game', title: '(mini Game)', isCompleted: false, hasGame: true, path: '/learning/balance-sheet/ppe-game' },
-    { id: 'ap', title: 'Accounts Payable', isCompleted: false, path: '/learning/balance-sheet/accounts-payable' },
-    { id: 'liabilities', title: 'Liabilities', isCompleted: false, path: '/learning/balance-sheet/liabilities' },
-    { id: 'deferred', title: 'Deferred Revenue', isCompleted: false, path: '/learning/balance-sheet/deferred-revenue' },
-    { id: 'longterm', title: 'Long-Term Debt', isCompleted: false, path: '/learning/balance-sheet/long-term-debt' },
-    { id: 'debt-game', title: '(mini Game)', isCompleted: false, hasGame: true, path: '/learning/balance-sheet/debt-game' },
-    { id: 'assets', title: 'Assets & Liabilities', isCompleted: false, path: '/learning/balance-sheet/assets-liabilities' },
-    { id: 'equity', title: 'Common Stack and Retained Earnings', isCompleted: false, path: '/learning/balance-sheet/equity' },
-    { id: 'quiz', title: 'Quiz 1', isCompleted: false, hasGame: true, path: '/learning/balance-sheet/quiz' },
+    {
+      id: "equation",
+      title: "Balance Sheet Equation",
+      isCompleted: false,
+      path: "/learning/balance-sheet/equation",
+    },
+    {
+      id: "cash",
+      title: "Cash and Accounts Receivable",
+      isCompleted: false,
+      path: "/learning/balance-sheet/cash-ar",
+    },
+    {
+      id: "inventory",
+      title: "Inventory",
+      isCompleted: false,
+      path: "/learning/balance-sheet/inventory",
+    },
+    {
+      id: "inventory-game",
+      title: "(mini Game)",
+      isCompleted: false,
+      hasGame: true,
+      path: "/learning/balance-sheet/inventory-game",
+    },
+    {
+      id: "prepaid",
+      title: "Prepaid Expenses",
+      isCompleted: false,
+      path: "/learning/balance-sheet/prepaid",
+    },
+    {
+      id: "ppe",
+      title: "Property, Plant, and Equipment",
+      isCompleted: false,
+      path: "/learning/balance-sheet/ppe",
+    },
+    {
+      id: "ppe-game",
+      title: "(mini Game)",
+      isCompleted: false,
+      hasGame: true,
+      path: "/learning/balance-sheet/ppe-game",
+    },
+    {
+      id: "ap",
+      title: "Accounts Payable",
+      isCompleted: false,
+      path: "/learning/balance-sheet/accounts-payable",
+    },
+    {
+      id: "liabilities",
+      title: "Liabilities",
+      isCompleted: false,
+      path: "/learning/balance-sheet/liabilities",
+    },
+    {
+      id: "deferred",
+      title: "Deferred Revenue",
+      isCompleted: false,
+      path: "/learning/balance-sheet/deferred-revenue",
+    },
+    {
+      id: "longterm",
+      title: "Long-Term Debt",
+      isCompleted: false,
+      path: "/learning/balance-sheet/long-term-debt",
+    },
+    {
+      id: "debt-game",
+      title: "(mini Game)",
+      isCompleted: false,
+      hasGame: true,
+      path: "/learning/balance-sheet/debt-game",
+    },
+    {
+      id: "assets",
+      title: "Assets & Liabilities",
+      isCompleted: false,
+      path: "/learning/balance-sheet/assets-liabilities",
+    },
+    {
+      id: "equity",
+      title: "Common Stack and Retained Earnings",
+      isCompleted: false,
+      path: "/learning/balance-sheet/equity",
+    },
+    {
+      id: "quiz",
+      title: "Quiz 1",
+      isCompleted: false,
+      hasGame: true,
+      path: "/learning/balance-sheet/quiz",
+    },
   ];
 
-  // Example quiz questions at specific timestamps
-  const quizQuestions: QuizQuestion[] = [
-    {
-      timestamp: 30, // 30 seconds into the video
-      question: "What is the basic accounting equation?",
-      options: [
-        "Assets = Liabilities + Owner's Equity",
-        "Assets = Liabilities - Owner's Equity",
-        "Assets + Liabilities = Owner's Equity",
-        "Assets - Liabilities = Owner's Equity"
-      ],
-      correctAnswer: 0,
-      explanation: "The basic accounting equation states that Assets = Liabilities + Owner's Equity, showing that everything a company owns (assets) is financed through either debt (liabilities) or equity."
-    }
-    // Add more questions with different timestamps
-  ];
+  const quizQuestions = getQuizQuestions();
 
   useEffect(() => {
     // Load YouTube API
-    const tag = document.createElement('script');
-    tag.src = 'https://www.youtube.com/iframe_api';
-    const firstScriptTag = document.getElementsByTagName('script')[0];
+    const tag = document.createElement("script");
+    tag.src = "https://www.youtube.com/iframe_api";
+    const firstScriptTag = document.getElementsByTagName("script")[0];
     firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
 
     // Initialize YouTube player when API is ready
     window.onYouTubeIframeAPIReady = () => {
-      playerRef.current = new YT.Player('youtube-player', {
-        videoId: 'Sx2R6qS8ZJw',
+      playerRef.current = new YT.Player("youtube-player", {
+        videoId: "Sx2R6qS8ZJw",
         events: {
           onStateChange: onPlayerStateChange,
-          onReady: onPlayerReady
-        }
+          onReady: onPlayerReady,
+        },
       });
     };
   }, []);
@@ -88,49 +201,89 @@ const BalanceSheetPage = () => {
   };
 
   const onPlayerStateChange = (event: YT.OnStateChangeEvent) => {
+    // Clear any existing interval
+    if (checkIntervalRef.current) {
+      clearInterval(checkIntervalRef.current);
+      checkIntervalRef.current = null;
+    }
+
     if (event.data === YT.PlayerState.PLAYING) {
       // Start checking for quiz timestamps
-      const checkTime = setInterval(() => {
+      checkIntervalRef.current = setInterval(() => {
         const currentTime = playerRef.current?.getCurrentTime() || 0;
-        const nextQuiz = quizQuestions.find(q => 
-          Math.abs(q.timestamp - currentTime) < 0.5 && 
-          !completedSections.includes(`quiz-${q.timestamp}`)
+        const nextQuiz = quizQuestions.find(
+          (q) =>
+            Math.abs(q.timestamp - currentTime) < 0.5 &&
+            !completedSections.includes(`quiz-${q.timestamp}`)
         );
 
         if (nextQuiz) {
           playerRef.current?.pauseVideo();
           setCurrentQuiz(nextQuiz);
+          setCurrentQuestionIndex(0);
           setShowQuiz(true);
-          clearInterval(checkTime);
+          if (checkIntervalRef.current) {
+            clearInterval(checkIntervalRef.current);
+            checkIntervalRef.current = null;
+          }
         }
       }, 500);
-
-      return () => clearInterval(checkTime);
     }
   };
+
+  // Cleanup interval on component unmount
+  useEffect(() => {
+    return () => {
+      if (checkIntervalRef.current) {
+        clearInterval(checkIntervalRef.current);
+        checkIntervalRef.current = null;
+      }
+    };
+  }, []);
 
   const handleAnswerSelect = (answerIndex: number) => {
+    if (!currentQuiz) return;
+    
+    const currentQuestion = currentQuiz.questions[currentQuestionIndex];
+    const correct = answerIndex === currentQuestion.correctAnswer;
+    
     setSelectedAnswer(answerIndex);
-    setIsCorrect(answerIndex === currentQuiz?.correctAnswer);
+    setIsCorrect(correct);
     setShowExplanation(true);
+
+    // Update quiz score
+    if (correct) {
+      setQuizScores(prev => ({
+        ...prev,
+        [currentQuiz.timestamp]: (prev[currentQuiz.timestamp] || 0) + 1
+      }));
+    }
   };
 
-  const handleContinue = () => {
-    if (currentQuiz) {
-      setCompletedSections([...completedSections, `quiz-${currentQuiz.timestamp}`]);
+  const handleNextQuestion = () => {
+    if (!currentQuiz) return;
+
+    if (currentQuestionIndex < currentQuiz.questions.length - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
+      setSelectedAnswer(null);
+      setShowExplanation(false);
+    } else {
+      // Quiz completed
+      setCompletedSections(prev => [...prev, `quiz-${currentQuiz.timestamp}`]);
+      setShowQuiz(false);
+      setCurrentQuiz(null);
+      setCurrentQuestionIndex(0);
+      setSelectedAnswer(null);
+      setShowExplanation(false);
+      playerRef.current?.playVideo();
     }
-    setShowQuiz(false);
-    setCurrentQuiz(null);
-    setSelectedAnswer(null);
-    setShowExplanation(false);
-    playerRef.current?.playVideo();
   };
 
   return (
     <div className="min-h-screen bg-white p-8">
       {/* Back Button */}
-      <Link 
-        href="/learning" 
+      <Link
+        href="/learning"
         className="inline-flex items-center text-[#612665] hover:underline mb-8"
       >
         <span className="mr-2">←</span>
@@ -139,11 +292,13 @@ const BalanceSheetPage = () => {
 
       <div className="max-w-7xl mx-auto px-4">
         {/* Title */}
-        <h1 className="text-4xl font-bold text-[#612665] mb-6">Balance Sheet Analysis</h1>
+        <h1 className="text-4xl font-bold text-[#612665] mb-6">
+          Balance Sheet Analysis
+        </h1>
 
         {/* Video Section */}
         <div className="mb-12 relative">
-          <div className="relative" style={{ paddingBottom: '56.25%' }}>
+          <div className="relative" style={{ paddingBottom: "56.25%" }}>
             <div
               id="youtube-player"
               className="absolute top-0 left-0 w-full h-full rounded-xl shadow-lg"
@@ -154,11 +309,17 @@ const BalanceSheetPage = () => {
           {showQuiz && currentQuiz && (
             <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-xl">
               <div className="bg-white p-8 rounded-xl max-w-2xl w-full mx-4 shadow-2xl">
-                <h3 className="text-2xl font-bold text-[#612665] mb-4">Pop Quiz!</h3>
-                <p className="text-lg mb-6">{currentQuiz.question}</p>
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-2xl font-bold text-[#612665]">Pop Quiz!</h3>
+                  <span className="text-[#612665]">
+                    Question {currentQuestionIndex + 1} of {currentQuiz.questions.length}
+                  </span>
+                </div>
+
+                <p className="text-lg mb-6">{currentQuiz.questions[currentQuestionIndex].question}</p>
                 
                 <div className="space-y-4 mb-6">
-                  {currentQuiz.options.map((option, index) => (
+                  {currentQuiz.questions[currentQuestionIndex].options.map((option, index) => (
                     <button
                       key={index}
                       onClick={() => handleAnswerSelect(index)}
@@ -184,17 +345,23 @@ const BalanceSheetPage = () => {
                     <p className="font-semibold mb-2">
                       {isCorrect ? 'Correct!' : 'Not quite right.'}
                     </p>
-                    <p>{currentQuiz.explanation}</p>
+                    <p>{currentQuiz.questions[currentQuestionIndex].explanation}</p>
                   </div>
                 )}
 
                 {showExplanation && (
                   <button
-                    onClick={handleContinue}
+                    onClick={handleNextQuestion}
                     className="w-full py-3 px-4 bg-[#612665] text-white rounded-lg hover:bg-[#4d1e51] transition-colors"
                   >
-                    Continue Video
+                    {currentQuestionIndex < currentQuiz.questions.length - 1 ? 'Next Question' : 'Continue Video'}
                   </button>
+                )}
+
+                {showExplanation && currentQuestionIndex === currentQuiz.questions.length - 1 && (
+                  <div className="mt-4 text-center text-[#612665]">
+                    Quiz Score: {quizScores[currentQuiz.timestamp] || 0} / {currentQuiz.questions.length}
+                  </div>
                 )}
               </div>
             </div>
@@ -205,12 +372,21 @@ const BalanceSheetPage = () => {
         <div className="mb-8">
           <div className="flex justify-between text-sm text-[#612665] mb-2">
             <span>Progress</span>
-            <span>{Math.round((completedSections.length / contentSections.length) * 100)}%</span>
+            <span>
+              {Math.round(
+                (completedSections.length / contentSections.length) * 100
+              )}
+              %
+            </span>
           </div>
           <div className="w-full h-2 bg-[#F3F0F4] rounded-full">
-            <div 
+            <div
               className="h-full bg-[#612665] rounded-full transition-all duration-300"
-              style={{ width: `${(completedSections.length / contentSections.length) * 100}%` }}
+              style={{
+                width: `${
+                  (completedSections.length / contentSections.length) * 100
+                }%`,
+              }}
             />
           </div>
         </div>
@@ -219,25 +395,37 @@ const BalanceSheetPage = () => {
         <div className="space-y-4">
           {contentSections.map((section) => (
             <Link key={section.id} href={section.path}>
-              <div 
+              <div
                 className={`p-6 border-2 ${
                   completedSections.includes(section.id)
-                    ? 'border-[#612665] bg-[#F3F0F4]'
-                    : 'border-[#F3F0F4]'
+                    ? "border-[#612665] bg-[#F3F0F4]"
+                    : "border-[#F3F0F4]"
                 } rounded-xl hover:border-[#612665] hover:shadow-lg transition-all cursor-pointer`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     {/* Status Icon */}
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center
-                      ${completedSections.includes(section.id)
-                        ? 'bg-[#612665] text-white'
-                        : 'border-2 border-[#612665]'
+                    <div
+                      className={`w-6 h-6 rounded-full flex items-center justify-center
+                      ${
+                        completedSections.includes(section.id)
+                          ? "bg-[#612665] text-white"
+                          : "border-2 border-[#612665]"
                       }`}
                     >
                       {completedSections.includes(section.id) && (
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
                         </svg>
                       )}
                     </div>
@@ -264,4 +452,4 @@ const BalanceSheetPage = () => {
   );
 };
 
-export default BalanceSheetPage; 
+export default BalanceSheetPage;

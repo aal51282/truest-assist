@@ -1,0 +1,85 @@
+1. Intro (0:00 - 0:35)
+Hey guys, Mike with Financiable here. Today we're going to cover a common finance interview question, which is: "Walk me through a balance sheet in plain English." In this video, I'll first walk through the equation that gives us the balance sheet, and then I'll go through each balance sheet account and give you tangible examples to help solidify your understanding of the account. Finally, I'll explain the difference between operating and non-operating assets and liabilities. And all these things will help you nail the question in the interview and get the job. By the way, if you find these videos helpful, definitely hit the like button down below and subscribe—we've got a lot more coming. Let's hop in here.
+
+2. The Balance Sheet Equation (0:37 - 1:22)
+So let's kick this off with the equation that gives us a balance sheet in the first place, which is also called the accounting equation. That equation is:
+
+Assets = Liabilities + Owner's Equity
+
+And let's walk through each of these items one by one to explain what they are in substance. So first, we have assets. Assets are what we own or are owed, and this is the first piece of the balance sheet. Then we have liabilities, which reflect things we owe to others. And then finally, owner's equity, which reflects the money that's been invested in the business and any accumulated net profit in the business. And those three things together give us our balance sheet. So with that clarified, let's now dive a layer deeper into each of the components of the balance sheet.
+
+3. Cash and Accounts Receivable (1:25 - 2:00)
+So, starting at the top here, we have cash and equivalents. From an accounting perspective, this just reflects really cash. But from a finance perspective, if we're analyzing a company, this also includes any marketable securities or anything that's easily sellable or liquid, like stocks that we own or bonds that we own that we can sell fairly easily.
+
+Below cash and equivalents, we have accounts receivable. And the way that accounts receivable are created is we sell something to a customer, and they agree to pay us in the future. So, accounts receivable reflects money that’s owed to us as a company at some point in the future.
+
+4. Inventory (2:03 - 2:11)
+Next, we have inventory, and it’s probably not a huge surprise what’s in the inventory account. This reflects goods that we’ve purchased from others to basically resell to our customers.
+
+5. Prepaid Expenses (2:14 - 2:41)
+Finally, we have prepaid expenses, and this is the one that's always confusing for folks when they first learn about it. Prepaid expenses come about when we prepay for an expense or some sort of service where we're going to receive a benefit in the future. And the key point there is in the future.
+
+So, if I prepay for insurance and I don’t receive the coverage yet, that’s a benefit that will accrue to me in the future, and thus it is an asset. So prepaid expenses represent when we pay ahead of time for a future benefit or expense.
+
+Moving down here, we have our non-current assets, and while there can be other items here, we’re really going to focus...
+
+6. Property, Plant, and Equipment (2:49 - 3:18)
+...in on the key item, which is property, plant, and equipment. And again, probably not a huge surprise as to what's here. This reflects the purchase of any item that is a piece of property, a plant—like factories, those sorts of things—or equipment, like any machinery, trucks, or anything along those lines.
+
+And these are the things that we use within our business that have—and this is the critical part—a useful life beyond one year. So, in order for something to fit in this category, it needs to be a physical asset that gives us a benefit beyond a year.
+
+With that covered, let's now hop over to liabilities.
+
+7. Accounts Payable (3:24 - 3:42)
+We first have accounts payable. And if you recall back to the inventory that we acquired earlier under inventory, we paid for that inventory in cash. But sometimes, we might tell the supplier: "We’ll pay you down the road, maybe when we sell the goods."
+
+And in that case, we owe the money, and we reflect that owed money as accounts payable.
+
+8. Accrued Expenses (Liabilities) (3:47 - 4:12)
+After accounts payable, we have accrued liabilities.
+
+Accrued liabilities come about when we receive the benefit of some service—which is ultimately an expense for the business—and we have yet to pay for it.
+
+So, in this case, I’ve shown you insurance. Let’s say we receive insurance coverage, and we’re going to pay for that in the future. That would be an accrued liability. But we could also have things like:
+
+We receive electric service from the electric company, but we’re not going to pay the bill until next month. That would also be an accrued liability.
+9. Deferred Revenue (4:16 - 4:41)
+Next, we have deferred revenue, which is another item that often throws people for a loop when they first hear about it.
+
+Why? Because it’s revenue—which is something we earn—but it’s on the liability side of the balance sheet.
+
+So, let’s talk about how this comes about. Deferred revenue comes about when a customer prepays for a future good or service.
+
+So, they’ve paid us in advance for something that we’re going to deliver in the future. This is reflected as a liability because we owe that good or service to the customer in the future.
+
+10. Long-Term Debt (4:43 - 5:13)
+Now, switching over to non-current liabilities, we could technically have any of the three items that we just discussed as a non-current liability.
+
+But I really want to zero in here on long-term debt.
+
+In particular, when we talk about long-term debt in the finance sense, in the accounting sense, what we’re talking about is a borrowing from some lender—that's usually a financial institution like a bank.
+
+And we borrow money with a promise to repay that money in the future.
+
+And while it’s not covered on this statement, we also have to pay interest in the meantime for the benefit of having that borrowing.
+
+11. Operating vs. Non-Operating Assets and Liabilities (5:32 - 6:44)
+Now that we’ve covered assets and liabilities, there’s one more distinction we need to clarify here.
+
+Operating assets and liabilities are those that come directly from the business’s operations—things like inventory, accounts receivable, and accounts payable.
+
+Meanwhile, non-operating assets and liabilities are those that are not directly tied to the core operations, like cash and long-term debt.
+
+12. Common Stock, Treasury Stock, and Retained Earnings (6:47 - 7:21)
+To kick off equity, we’ll start with our stock accounts.
+
+Common stock comes about when an investor gives a company money in return for shares or ownership.
+
+Then we have treasury stock, which occurs when a company repurchases its own shares.
+
+Below that, we have retained earnings, which reflects the accumulated profit of the business, net of any dividends paid out to shareholders.
+
+13. Wrap-Up (7:25 - 7:41)
+Hopefully, after that walkthrough, each of the balance sheet accounts makes a little bit more sense. You’ll be able to confidently walk through them in an interview and ultimately get the job.
+
+If you found this video helpful, definitely hit the like button down below and subscribe. Take care, and hope to see you soon!

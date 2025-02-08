@@ -13,6 +13,12 @@ declare global {
         elementId: string,
         config: {
           videoId: string;
+          playerVars?: {
+            controls?: number;
+            disablekb?: number;
+            rel?: number;
+            modestbranding?: number;
+          };
           events?: {
             onReady?: (event: YT.PlayerEvent) => void;
             onStateChange?: (event: YT.OnStateChangeEvent) => void;
@@ -32,6 +38,7 @@ declare global {
       playVideo(): void;
       pauseVideo(): void;
       getCurrentTime(): number;
+      seekTo(seconds: number, allowSeekAhead?: boolean): void;
     }
 
     interface PlayerEvent {
@@ -75,6 +82,9 @@ const BalanceSheetPage = () => {
   const [showExplanation, setShowExplanation] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [quizScores, setQuizScores] = useState<{ [key: number]: number }>({});
+  const [incorrectAnswers, setIncorrectAnswers] = useState<number[]>([]);
+  const [shortAnswer, setShortAnswer] = useState<string>("");
+  const [quizBuffer, setQuizBuffer] = useState(false);
   const playerRef = useRef<YT.Player | null>(null);
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -188,6 +198,12 @@ const BalanceSheetPage = () => {
     window.onYouTubeIframeAPIReady = () => {
       playerRef.current = new YT.Player("youtube-player", {
         videoId: "Sx2R6qS8ZJw",
+        playerVars: {
+          controls: 1,        // Show player controls
+          disablekb: 1,      // Disable keyboard controls
+          rel: 0,            // Don't show related videos
+          modestbranding: 1  // Show modest branding
+        },
         events: {
           onStateChange: onPlayerStateChange,
           onReady: onPlayerReady,
@@ -197,7 +213,21 @@ const BalanceSheetPage = () => {
   }, []);
 
   const onPlayerReady = (event: YT.PlayerEvent) => {
-    // Player is ready
+    // Add time update listener
+    setInterval(() => {
+      if (playerRef.current) {
+        const currentTime = playerRef.current.getCurrentTime();
+        const storedTime = Number(sessionStorage.getItem('videoProgress')) || 0;
+        
+        // If user tries to rewind (current time is less than stored time)
+        if (currentTime < storedTime) {
+          playerRef.current.seekTo(storedTime, true);
+        } else {
+          // Update stored time if moving forward
+          sessionStorage.setItem('videoProgress', String(currentTime));
+        }
+      }
+    }, 1000);
   };
 
   const onPlayerStateChange = (event: YT.OnStateChangeEvent) => {
@@ -207,10 +237,29 @@ const BalanceSheetPage = () => {
       checkIntervalRef.current = null;
     }
 
+    // Handle seeking attempts
+    const currentTime = playerRef.current?.getCurrentTime() || 0;
+    const storedTime = Number(sessionStorage.getItem('videoProgress')) || 0;
+    
+    if (currentTime < storedTime) {
+      playerRef.current?.seekTo(storedTime, true);
+    }
+
     if (event.data === YT.PlayerState.PLAYING) {
       // Start checking for quiz timestamps
       checkIntervalRef.current = setInterval(() => {
         const currentTime = playerRef.current?.getCurrentTime() || 0;
+        const storedTime = Number(sessionStorage.getItem('videoProgress')) || 0;
+        
+        // Prevent rewinding
+        if (currentTime < storedTime) {
+          playerRef.current?.seekTo(storedTime, true);
+          return;
+        }
+
+        // Skip quiz check if we're in the buffer period
+        if (quizBuffer) return;
+
         const nextQuiz = quizQuestions.find(
           (q) =>
             Math.abs(q.timestamp - currentTime) < 0.5 &&
@@ -227,11 +276,14 @@ const BalanceSheetPage = () => {
             checkIntervalRef.current = null;
           }
         }
+
+        // Update stored progress
+        sessionStorage.setItem('videoProgress', String(currentTime));
       }, 500);
     }
   };
 
-  // Cleanup interval on component unmount
+  // Clean up on component unmount
   useEffect(() => {
     return () => {
       if (checkIntervalRef.current) {
@@ -242,7 +294,7 @@ const BalanceSheetPage = () => {
   }, []);
 
   const handleAnswerSelect = (answerIndex: number) => {
-    if (!currentQuiz) return;
+    if (!currentQuiz || incorrectAnswers.includes(answerIndex)) return;
     
     const currentQuestion = currentQuiz.questions[currentQuestionIndex];
     const correct = answerIndex === currentQuestion.correctAnswer;
@@ -251,31 +303,51 @@ const BalanceSheetPage = () => {
     setIsCorrect(correct);
     setShowExplanation(true);
 
-    // Update quiz score
     if (correct) {
+      // Update quiz score and proceed
       setQuizScores(prev => ({
         ...prev,
         [currentQuiz.timestamp]: (prev[currentQuiz.timestamp] || 0) + 1
       }));
+      setShortAnswer("");
+      setIncorrectAnswers([]);
+    } else {
+      // Add to incorrect answers and show hint
+      setIncorrectAnswers(prev => [...prev, answerIndex]);
+      setShortAnswer("Try again! Think about what we learned in the video about this concept.");
     }
   };
 
   const handleNextQuestion = () => {
-    if (!currentQuiz) return;
+    if (!currentQuiz || !isCorrect) return;
 
     if (currentQuestionIndex < currentQuiz.questions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
       setSelectedAnswer(null);
       setShowExplanation(false);
+      setIncorrectAnswers([]);
+      setShortAnswer("");
     } else {
       // Quiz completed
+      const currentTime = playerRef.current?.getCurrentTime() || 0;
       setCompletedSections(prev => [...prev, `quiz-${currentQuiz.timestamp}`]);
       setShowQuiz(false);
       setCurrentQuiz(null);
       setCurrentQuestionIndex(0);
       setSelectedAnswer(null);
       setShowExplanation(false);
+      setIncorrectAnswers([]);
+      setShortAnswer("");
+      
+      // Set buffer and clear it after 2 seconds
+      setQuizBuffer(true);
+      // Ensure we're at the right timestamp before playing
+      playerRef.current?.seekTo(currentTime + 0.5, true);
       playerRef.current?.playVideo();
+      
+      setTimeout(() => {
+        setQuizBuffer(false);
+      }, 2000);
     }
   };
 
@@ -323,13 +395,15 @@ const BalanceSheetPage = () => {
                     <button
                       key={index}
                       onClick={() => handleAnswerSelect(index)}
-                      disabled={showExplanation}
+                      disabled={incorrectAnswers.includes(index) || (showExplanation && isCorrect)}
                       className={`w-full p-4 text-left rounded-lg border-2 transition-all
-                        ${selectedAnswer === index 
-                          ? isCorrect 
-                            ? 'border-green-500 bg-green-50'
-                            : 'border-red-500 bg-red-50'
-                          : 'border-[#F3F0F4] hover:border-[#612665]'
+                        ${incorrectAnswers.includes(index)
+                          ? 'border-red-500 bg-red-50 opacity-50 cursor-not-allowed'
+                          : selectedAnswer === index 
+                            ? isCorrect 
+                              ? 'border-green-500 bg-green-50'
+                              : 'border-red-500 bg-red-50'
+                            : 'border-[#F3F0F4] hover:border-[#612665]'
                         }
                       `}
                     >
@@ -338,18 +412,20 @@ const BalanceSheetPage = () => {
                   ))}
                 </div>
 
-                {showExplanation && (
-                  <div className={`p-4 rounded-lg mb-6 ${
-                    isCorrect ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'
-                  }`}>
-                    <p className="font-semibold mb-2">
-                      {isCorrect ? 'Correct!' : 'Not quite right.'}
-                    </p>
+                {shortAnswer && !isCorrect && (
+                  <div className="p-4 rounded-lg mb-6 bg-yellow-50 text-yellow-800">
+                    <p>{shortAnswer}</p>
+                  </div>
+                )}
+
+                {showExplanation && isCorrect && (
+                  <div className="p-4 rounded-lg mb-6 bg-green-50 text-green-800">
+                    <p className="font-semibold mb-2">Correct!</p>
                     <p>{currentQuiz.questions[currentQuestionIndex].explanation}</p>
                   </div>
                 )}
 
-                {showExplanation && (
+                {showExplanation && isCorrect && (
                   <button
                     onClick={handleNextQuestion}
                     className="w-full py-3 px-4 bg-[#612665] text-white rounded-lg hover:bg-[#4d1e51] transition-colors"

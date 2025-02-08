@@ -1,5 +1,5 @@
-import React from 'react';
-import Image from 'next/image';
+import React from "react";
+import Image from "next/image";
 
 const Logo = () => {
   return (
@@ -16,4 +16,4 @@ const Logo = () => {
   );
 };
 
-export default Logo; 
+export default Logo;

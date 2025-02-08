@@ -8,8 +8,20 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Truest Assist - Login",
-  description: "Login to Truest Assist - Making Cents of Business",
+  title: "Truest Assist",
+  description: "Making Cents of Business",
+  icons: [
+    {
+      rel: 'icon',
+      url: '/petals.png',
+      type: 'image/png',
+    },
+    {
+      rel: 'apple-touch-icon',
+      url: '/petals.png',
+      type: 'image/png',
+    }
+  ],
 };
 
 export default function RootLayout({
@@ -19,6 +31,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" href="/petals.png" type="image/png" sizes="any" />
+      </head>
       <body className={inter.className}>{children}</body>
     </html>
   );

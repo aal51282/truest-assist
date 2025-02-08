@@ -46,7 +46,7 @@ const LearningPage = () => {
                   Learn to analyze balance sheets and understand key financial ratios
                 </p>
                 <div className="mt-4 flex items-center text-sm text-[#612665]">
-                  <span className="mr-4">🕒 30 mins</span>
+                  <span className="mr-4">🕒 10 mins</span>
                   <span>⭐ Beginner Friendly</span>
                 </div>
               </div>
@@ -55,7 +55,7 @@ const LearningPage = () => {
         </Link>
 
         <Link href="/learning/ebitda" className="block group">
-          <div className="p-8 border-2 border-[#F3F0F4] rounded-xl hover:border-[#612665] hover:shadow-lg transition-all transform hover:-translate-y-1 cursor-pointer bg-white">
+          <div className="p-8 border-2 border-[#F3F0F4] rounded-xl hover:border-[#612665] hover:shadow-lg transition-all transform hover:-translate-y-1 cursor-pointer bg-white opacity-50">
             <div className="flex items-start space-x-6">
               <div className="text-4xl bg-[#F3F0F4] w-16 h-16 rounded-xl flex items-center justify-center group-hover:bg-[#612665] group-hover:text-white transition-colors">
                 💡
@@ -75,7 +75,7 @@ const LearningPage = () => {
         </Link>
 
         <Link href="/learning/horizontal-analysis" className="block group">
-          <div className="p-8 border-2 border-[#F3F0F4] rounded-xl hover:border-[#612665] hover:shadow-lg transition-all transform hover:-translate-y-1 cursor-pointer bg-white">
+          <div className="p-8 border-2 border-[#F3F0F4] rounded-xl hover:border-[#612665] hover:shadow-lg transition-all transform hover:-translate-y-1 cursor-pointer bg-white opacity-50">
             <div className="flex items-start space-x-6">
               <div className="text-4xl bg-[#F3F0F4] w-16 h-16 rounded-xl flex items-center justify-center group-hover:bg-[#612665] group-hover:text-white transition-colors">
                 📈

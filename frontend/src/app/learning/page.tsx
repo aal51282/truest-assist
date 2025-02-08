@@ -25,16 +25,16 @@ const LearningPage = () => {
 
       {/* Learning Modules */}
       <div className="space-y-6">
-        <Link href="/learning/balance-sheet" className="block group">
+        <Link href="/learning/financial-statements" className="block group">
           <div className="p-8 border-2 border-[#F3F0F4] rounded-xl hover:border-[#612665] hover:shadow-lg transition-all transform hover:-translate-y-1 cursor-pointer bg-white">
             <div className="flex items-start space-x-6">
               <div className="text-4xl bg-[#F3F0F4] w-16 h-16 rounded-xl flex items-center justify-center group-hover:bg-[#612665] group-hover:text-white transition-colors">
                 📊
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-[#612665] mb-2">Balance Sheet Analysis</h2>
+                <h2 className="text-2xl font-bold text-[#612665] mb-2">Financial Statements</h2>
                 <p className="text-[#b8a3be]">
-                  Learn to analyze balance sheets and understand key financial ratios
+                  Master the fundamentals of financial statements including income, revenue, and balance sheets
                 </p>
                 <div className="mt-4 flex items-center text-sm text-[#612665]">
                   <span className="mr-4">🕒 30 mins</span>

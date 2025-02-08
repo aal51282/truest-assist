@@ -4,11 +4,15 @@ import React from 'react';
 import Logo from '@/components/Logo';
 import Input from '@/components/Input';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
+  const router = useRouter();
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle login logic here
+    // For now, allow any login attempt and redirect to learning path
+    router.push('/learning-path');
   };
 
   return (

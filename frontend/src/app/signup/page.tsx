@@ -4,9 +4,11 @@ import React, { useState } from 'react';
 import Logo from '@/components/Logo';
 import Input from '@/components/Input';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import GoalsSelection from '@/components/GoalsSelection';
 
 export default function SignUp() {
+  const router = useRouter();
   const [step, setStep] = useState(1);
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
   const [formData, setFormData] = useState({
@@ -31,13 +33,15 @@ export default function SignUp() {
     );
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (step === 1) {
       setStep(2);
     } else {
       // Handle final submission with both formData and selectedGoals
       console.log({ ...formData, goals: selectedGoals });
+      // Redirect to learning path page
+      router.push('/learning-path');
     }
   };
 

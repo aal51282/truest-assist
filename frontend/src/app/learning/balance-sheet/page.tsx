@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { getQuizQuestions } from "@/data/transcripts/balance-sheet";
+import ReactConfetti from 'react-confetti';
 
 // YouTube IFrame API TypeScript declarations
 declare global {
@@ -87,8 +88,10 @@ const BalanceSheetPage = () => {
   const [shortAnswer, setShortAnswer] = useState<string>("");
   const [quizBuffer, setQuizBuffer] = useState(false);
   const [quizTimelineMarkers, setQuizTimelineMarkers] = useState<Array<{time: number, completed: boolean}>>([]);
+  const [showCelebration, setShowCelebration] = useState(false);
   const playerRef = useRef<YT.Player | null>(null);
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const contentSections: ContentSection[] = [
     {
@@ -226,6 +229,10 @@ const BalanceSheetPage = () => {
       });
     };
 
+    // Initialize audio element
+    audioRef.current = new Audio('/celebration.mp3');
+    audioRef.current.volume = 0.5; // Set volume to 50%
+
     // Clear stored progress when component unmounts
     return () => {
       sessionStorage.removeItem('videoProgress');
@@ -349,34 +356,61 @@ const BalanceSheetPage = () => {
       setIncorrectAnswers([]);
       setShortAnswer("");
     } else {
-      // Quiz completed
-      const currentTime = playerRef.current?.getCurrentTime() || 0;
-      setCompletedSections(prev => [...prev, `quiz-${currentQuiz.timestamp}`]);
-      setShowQuiz(false);
-      setCurrentQuiz(null);
-      setCurrentQuestionIndex(0);
-      setSelectedAnswer(null);
-      setShowExplanation(false);
-      setIncorrectAnswers([]);
-      setShortAnswer("");
+      // Quiz completed - Start celebration
+      setShowCelebration(true);
+      playCelebrationSound(); // Play the celebration sound
       
-      // Set buffer and clear it after 2 seconds
-      setQuizBuffer(true);
-      
-      // Ensure we're well past the quiz timestamp to prevent re-triggering
-      const skipForwardTime = currentTime + 2;
-      playerRef.current?.seekTo(skipForwardTime, true);
-      sessionStorage.setItem('videoProgress', String(skipForwardTime));
-      playerRef.current?.playVideo();
-      
+      // Stop celebration after 3 seconds
       setTimeout(() => {
-        setQuizBuffer(false);
-      }, 2000);
+        setShowCelebration(false);
+        
+        // Continue with quiz completion logic
+        const currentTime = playerRef.current?.getCurrentTime() || 0;
+        setCompletedSections(prev => [...prev, `quiz-${currentQuiz.timestamp}`]);
+        setShowQuiz(false);
+        setCurrentQuiz(null);
+        setCurrentQuestionIndex(0);
+        setSelectedAnswer(null);
+        setShowExplanation(false);
+        setIncorrectAnswers([]);
+        setShortAnswer("");
+        
+        // Set buffer and clear it after 2 seconds
+        setQuizBuffer(true);
+        
+        // Ensure we're well past the quiz timestamp to prevent re-triggering
+        const skipForwardTime = currentTime + 2;
+        playerRef.current?.seekTo(skipForwardTime, true);
+        sessionStorage.setItem('videoProgress', String(skipForwardTime));
+        playerRef.current?.playVideo();
+        
+        setTimeout(() => {
+          setQuizBuffer(false);
+        }, 2000);
+      }, 3000);
+    }
+  };
+
+  const playCelebrationSound = () => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0; // Reset to start
+      audioRef.current.play().catch(err => console.log('Audio playback failed:', err));
     }
   };
 
   return (
     <div className="min-h-screen bg-white p-8">
+      {showCelebration && (
+        <ReactConfetti
+          width={window.innerWidth}
+          height={window.innerHeight}
+          numberOfPieces={200}
+          recycle={false}
+          colors={['#612665', '#4d1e51', '#b8a3be', '#F3F0F4']}
+          style={{ position: 'fixed', top: 0, left: 0, zIndex: 100 }}
+        />
+      )}
+      
       {/* Back Button */}
       <Link
         href="/learning"

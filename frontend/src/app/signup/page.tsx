@@ -5,6 +5,7 @@ import Logo from "@/components/Logo";
 import Input from "@/components/Input";
 import Link from "next/link";
 import GoalsSelection from "@/components/GoalsSelection";
+import { useRouter } from "next/navigation";
 
 export default function SignUp() {
   const [step, setStep] = useState(1);
@@ -17,6 +18,7 @@ export default function SignUp() {
     password: "",
     confirmPassword: "",
   });
+  const router = useRouter();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -38,6 +40,8 @@ export default function SignUp() {
     } else {
       // Handle final submission with both formData and selectedGoals
       console.log({ ...formData, goals: selectedGoals });
+      // Redirect to learning path
+      router.push('/learning-path');
     }
   };
 

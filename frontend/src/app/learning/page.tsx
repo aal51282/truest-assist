@@ -109,7 +109,7 @@ const LearningPage = () => {
         {/* Go to Dashboard Button */}
         <div className="text-center mt-12">
           <Link
-            href="/dashboard"
+            href="/learning/dashboard"
             className="inline-block px-8 py-4 bg-[#612665] text-white rounded-lg hover:bg-[#4d1e51] transition-colors text-lg font-semibold"
           >
             Go to Dashboard

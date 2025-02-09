@@ -8,6 +8,12 @@ interface VideoPlayerProps {
   onQuizComplete: (score: number) => void;
 }
 
+interface AnsweredQuestion {
+  questionIndex: number;
+  selectedAnswer: number;
+  isCorrect: boolean;
+}
+
 const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoId, quizzes, onQuizComplete }) => {
   const [showQuiz, setShowQuiz] = useState(false);
   const [currentQuiz, setCurrentQuiz] = useState<Quiz | null>(null);
@@ -17,8 +23,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoId, quizzes, onQuizCompl
   const [attempts, setAttempts] = useState<number[]>([]);
   const [score, setScore] = useState(0);
   const [completedQuizzes, setCompletedQuizzes] = useState<Set<number>>(new Set());
-  const playerRef = useRef<YT.Player>();
-  const checkInterval = useRef<NodeJS.Timeout>();
+  const [answeredQuestions, setAnsweredQuestions] = useState<Map<number, AnsweredQuestion>>(new Map());
+  const playerRef = useRef<YT.Player | null>(null);
+  const checkInterval = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const sortedQuizzes = [...quizzes].sort((a, b) => a.timestamp - b.timestamp);
@@ -55,8 +62,20 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoId, quizzes, onQuizCompl
   const handleAnswerSelect = (answerIndex: number) => {
     if (!currentQuiz) return;
 
-    setSelectedAnswer(answerIndex);
     const isCorrect = answerIndex === currentQuiz.questions[currentQuestionIndex].correctAnswer;
+
+    // Store the answered question
+    setAnsweredQuestions(prev => {
+      const newAnswers = new Map(prev);
+      newAnswers.set(currentQuestionIndex, {
+        questionIndex: currentQuestionIndex,
+        selectedAnswer: answerIndex,
+        isCorrect
+      });
+      return newAnswers;
+    });
+
+    setSelectedAnswer(answerIndex);
 
     if (!isCorrect) {
       const newAttempts = [...attempts];
@@ -179,46 +198,58 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoId, quizzes, onQuizCompl
                           </h4>
                           
                           <div className="space-y-3">
-                            {currentQuiz.questions[currentQuestionIndex].options.map((option, index) => (
-                              <button
-                                key={index}
-                                onClick={() => !showExplanation && handleAnswerSelect(index)}
-                                disabled={showExplanation}
-                                className={`group w-full p-4 text-left rounded-lg border-2 transition-all duration-300
-                                  ${selectedAnswer === index 
-                                    ? index === currentQuiz.questions[currentQuestionIndex].correctAnswer
-                                      ? 'border-green-500 bg-green-50'
-                                      : 'border-red-500 bg-red-50'
-                                    : 'border-gray-200 hover:border-[#612665] hover:shadow-md'
-                                  }
-                                `}
-                              >
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center">
-                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center mr-3
-                                      ${selectedAnswer === index 
-                                        ? index === currentQuiz.questions[currentQuestionIndex].correctAnswer
-                                          ? 'bg-green-500 text-white'
-                                          : 'bg-red-500 text-white'
-                                        : 'border-2 border-gray-300 group-hover:border-[#612665]'
-                                      }
-                                    `}>
-                                      {selectedAnswer === index && (
-                                        index === currentQuiz.questions[currentQuestionIndex].correctAnswer 
-                                          ? '✓'
-                                          : '✗'
-                                      )}
+                            {currentQuiz.questions[currentQuestionIndex].options.map((option, index) => {
+                              const answeredQuestion = answeredQuestions.get(currentQuestionIndex);
+                              const isAnswered = answeredQuestion !== undefined;
+                              const isSelected = isAnswered && answeredQuestion.selectedAnswer === index;
+                              const isCorrectAnswer = currentQuiz.questions[currentQuestionIndex].correctAnswer === index;
+                              
+                              return (
+                                <button
+                                  key={index}
+                                  onClick={() => !showExplanation && handleAnswerSelect(index)}
+                                  disabled={showExplanation || isAnswered}
+                                  className={`group w-full p-4 text-left rounded-lg border-2 transition-all duration-300
+                                    ${isSelected 
+                                      ? isCorrectAnswer
+                                        ? 'border-green-500 bg-green-50'
+                                        : 'border-red-500 bg-red-50'
+                                      : isAnswered && isCorrectAnswer
+                                        ? 'border-green-500 bg-green-50'
+                                        : 'border-gray-200 hover:border-[#612665] hover:shadow-md'
+                                    }
+                                  `}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center">
+                                      <div className={`w-6 h-6 rounded-full flex items-center justify-center mr-3
+                                        ${isSelected 
+                                          ? isCorrectAnswer
+                                            ? 'bg-green-500 text-white'
+                                            : 'bg-red-500 text-white'
+                                          : isAnswered && isCorrectAnswer
+                                            ? 'bg-green-500 text-white'
+                                            : 'border-2 border-gray-300 group-hover:border-[#612665]'
+                                        }
+                                      `}>
+                                        {(isSelected || (isAnswered && isCorrectAnswer)) && (
+                                          isCorrectAnswer ? '✓' : '✗'
+                                        )}
+                                      </div>
+                                      <span className={
+                                        isSelected 
+                                          ? isCorrectAnswer
+                                            ? 'text-green-700'
+                                            : 'text-red-700'
+                                          : isAnswered && isCorrectAnswer
+                                            ? 'text-green-700'
+                                            : 'text-gray-700'
+                                      }>{option}</span>
                                     </div>
-                                    <span className={selectedAnswer === index 
-                                      ? index === currentQuiz.questions[currentQuestionIndex].correctAnswer
-                                        ? 'text-green-700'
-                                        : 'text-red-700'
-                                      : 'text-gray-700'
-                                    }>{option}</span>
                                   </div>
-                                </div>
-                              </button>
-                            ))}
+                                </button>
+                              );
+                            })}
                           </div>
 
                           {selectedAnswer !== null && !showExplanation && 

@@ -2,7 +2,10 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '@/models/User';
+import Item from '@/models/Item';
 import connectDB from '@/lib/mongodb';
+import { IUser } from '@/models/User';
+import mongoose from 'mongoose';
 
 export async function POST(request: Request) {
   try {
@@ -63,55 +66,85 @@ export async function POST(request: Request) {
       );
     }
 
-    // Hash the password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Start a MongoDB session for transaction
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    // Create new user
-    const user = new User({
-      username,
-      email: email.toLowerCase(),
-      password: hashedPassword,
-    });
+    try {
+      // Hash the password
+      const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Save the user
-    await user.save();
+      // Create new user
+      const user = new User({
+        username,
+        email: email.toLowerCase(),
+        password: hashedPassword,
+      });
 
-    // Generate JWT token
-    const token = jwt.sign(
-      {
-        userId: user._id.toString(),
-        email: user.email,
-        username: user.username,
-      },
-      process.env.JWT_SECRET || 'secret',
-      { expiresIn: '1h' }
-    );
+      // Save the user within the transaction
+      await user.save({ session });
 
-    // Create the response
-    const response = NextResponse.json(
-      {
-        success: true,
-        data: {
-          id: user._id.toString(),
-          username: user.username,
+      // Create initial item/progress record for the user
+      const item = new Item({
+        modulesDone: 0,
+        leaderboardScore: 0,
+        owner: user._id
+      });
+
+      // Save the item within the transaction
+      await item.save({ session });
+
+      // Commit the transaction
+      await session.commitTransaction();
+
+      // Generate JWT token
+      const token = jwt.sign(
+        {
+          userId: user._id.toString(),
           email: user.email,
+          username: user.username,
         },
-      },
-      { status: 201 }
-    );
+        process.env.JWT_SECRET || 'secret',
+        { expiresIn: '1h' }
+      );
 
-    // Set the JWT cookie
-    response.cookies.set({
-      name: 'token',
-      value: token,
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 3600, // 1 hour
-      sameSite: 'strict',
-      path: '/',
-    });
+      // Create the response
+      const response = NextResponse.json(
+        {
+          success: true,
+          data: {
+            id: user._id.toString(),
+            username: user.username,
+            email: user.email,
+            progress: {
+              modulesDone: item.modulesDone,
+              leaderboardScore: item.leaderboardScore
+            }
+          },
+        },
+        { status: 201 }
+      );
 
-    return response;
+      // Set the JWT cookie
+      response.cookies.set({
+        name: 'token',
+        value: token,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 3600, // 1 hour
+        sameSite: 'strict',
+        path: '/',
+      });
+
+      return response;
+    } catch (error) {
+      // If there's an error, abort the transaction
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      // End the session
+      session.endSession();
+    }
   } catch (error) {
     console.error('Signup error:', error);
     return NextResponse.json(

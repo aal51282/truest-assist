@@ -14,125 +14,127 @@ interface TranscriptSegment {
 
 export const ebitdaTranscript: TranscriptSegment[] = [
   {
-    startTime: 40,
-    endTime: 41,
-    text: "Let's test your understanding of EBITDA fundamentals.",
+    startTime: 90,
+    endTime: 91,
+    text: "Let's check your understanding of EBITDA basics.",
     quiz: {
       questions: [
         {
-          question: "What is the main purpose of using EBITDA?",
+          question: "What does EBITDA stand for?",
           options: [
-            "To calculate a company's tax obligations",
-            "To measure operating performance on a normalized basis",
-            "To determine dividend payments",
-            "To calculate total revenue"
-          ],
-          correctAnswer: 1,
-          explanation: "EBITDA is used to measure a company's operating performance on a normalized basis by removing items that business managers have discretion over, like debt financing and capital expenditures."
-        },
-        {
-          question: "What does EBITDA remove from earnings?",
-          options: [
-            "Operating expenses",
-            "Revenue",
-            "Items managers have discretion over (like debt financing and capex)",
-            "Employee salaries"
-          ],
-          correctAnswer: 2,
-          explanation: "EBITDA removes items that business managers have discretion over, such as debt financing and capital expenditures, to showcase financial performance without capital structure or capex requirements."
-        }
-      ]
-    }
-  },
-  {
-    startTime: 65,
-    endTime: 66,
-    text: "Let's check your understanding of EBITDA calculations.",
-    quiz: {
-      questions: [
-        {
-          question: "What are the two ways to calculate EBITDA?",
-          options: [
-            "Net Income + Interest + Taxes + D&A, or EBIT + D&A",
-            "Revenue - Expenses, or Net Income - D&A",
-            "Gross Profit + Operating Expenses, or EBIT - D&A",
-            "Total Assets - Total Liabilities, or Equity + D&A"
+            "Earnings Before Interest, Taxes, Depreciation, and Amortization",
+            "Earnings Before Income Tax and Debt Adjustments",
+            "Earnings Before Interest and Tax Deductions Applied",
+            "Earnings Before International Tax and Depreciation Allowances"
           ],
           correctAnswer: 0,
-          explanation: "EBITDA can be calculated either by starting with net income and adding back interest, taxes, depreciation and amortization, or by taking EBIT and adding back D&A."
+          explanation: "EBITDA stands for Earnings Before Interest, Taxes, Depreciation, and Amortization, which helps evaluate a company's operating performance."
         },
         {
-          question: "Where can you find depreciation and amortization (D&A) figures?",
+          question: "Why is interest added back in EBITDA calculations?",
           options: [
-            "Only in the income statement",
-            "Only in the balance sheet",
-            "In the cash flow statement if not broken out in the income statement",
-            "Only in the notes to financial statements"
+            "Because it represents the cost of financing and varies with debt structure",
+            "Because it's not a real expense",
+            "Because all companies have the same interest rates",
+            "Because interest is always tax deductible"
           ],
-          correctAnswer: 2,
-          explanation: "While D&A might be shown in the income statement, you may need to look at the cash flow statement to find D&A figures if they're not explicitly broken out in the income statement."
+          correctAnswer: 0,
+          explanation: "Interest is added back because it represents financing costs that vary based on a company's debt structure, making comparisons between companies more meaningful."
+        },
+        {
+          question: "Which of these is NOT a component added back in EBITDA?",
+          options: [
+            "Operating expenses",
+            "Interest",
+            "Depreciation",
+            "Taxes"
+          ],
+          correctAnswer: 0,
+          explanation: "Operating expenses are not added back in EBITDA calculations. Only interest, taxes, depreciation, and amortization are added back to net income."
         }
       ]
     }
   },
   {
-    startTime: 106,
-    endTime: 107,
-    text: "Let's review the pros of using EBITDA.",
+    startTime: 180,
+    endTime: 181,
+    text: "Let's test your knowledge of EBITDA calculations.",
     quiz: {
       questions: [
         {
-          question: "What is a key advantage of using EBITDA?",
+          question: "If a company has net income of $500,000, interest of $100,000, taxes of $150,000, and depreciation of $75,000, what is their EBITDA?",
           options: [
-            "It's recognized by GAAP",
-            "It makes companies more comparable by removing noise below operating income",
-            "It includes all capital expenditures",
-            "It shows exact tax obligations"
+            "$825,000",
+            "$750,000",
+            "$650,000",
+            "$500,000"
           ],
-          correctAnswer: 1,
-          explanation: "EBITDA makes different companies more comparable by removing noise below operating income, including one-time items, allowing for better comparison between companies."
+          correctAnswer: 0,
+          explanation: "EBITDA = Net Income ($500,000) + Interest ($100,000) + Taxes ($150,000) + Depreciation ($75,000) = $825,000"
         },
         {
-          question: "Why is EBITDA useful for early-stage companies?",
+          question: "Why are depreciation and amortization added back in EBITDA?",
           options: [
-            "It requires less calculation",
-            "It's required by regulators",
-            "It can be positive even when earnings aren't",
-            "It includes all expenses"
+            "They are non-cash expenses that don't represent actual cash outflows",
+            "They are always tax deductible",
+            "They increase company value",
+            "They represent future investments"
           ],
-          correctAnswer: 2,
-          explanation: "EBITDA is useful for early-stage companies or those with volatile earnings because it can be positive even when earnings are not, providing a measure of operating performance."
+          correctAnswer: 0,
+          explanation: "Depreciation and amortization are added back because they are non-cash expenses that don't represent actual cash outflows from the business."
+        },
+        {
+          question: "What is a limitation of using EBITDA?",
+          options: [
+            "It doesn't consider working capital requirements",
+            "It's too difficult to calculate",
+            "It includes too many expenses",
+            "It's not used by investors"
+          ],
+          correctAnswer: 0,
+          explanation: "A key limitation of EBITDA is that it doesn't consider working capital requirements or capital expenditures, which are crucial for many businesses."
         }
       ]
     }
   },
   {
-    startTime: 150,
-    endTime: 151,
-    text: "Let's examine the limitations of EBITDA.",
+    startTime: 270,
+    endTime: 271,
+    text: "Let's review the advantages of using EBITDA.",
     quiz: {
       questions: [
         {
-          question: "What is a major limitation of EBITDA?",
+          question: "What is a key advantage of using EBITDA for company comparisons?",
           options: [
-            "It's too simple to calculate",
-            "It presents companies as if they never pay taxes or interest",
-            "It's not used by analysts",
-            "It's too complex for investors"
+            "It removes the impact of financing and accounting decisions",
+            "It includes all possible expenses",
+            "It shows exact cash flow",
+            "It predicts future profits"
           ],
-          correctAnswer: 1,
-          explanation: "A major limitation of EBITDA is that it presents companies as though they never pay taxes, interest, or capital expenditures, which isn't realistic."
+          correctAnswer: 0,
+          explanation: "EBITDA is useful for comparing companies because it removes the impact of financing decisions and accounting choices, focusing on operational performance."
         },
         {
-          question: "Which accounting standard recognizes EBITDA?",
+          question: "When is EBITDA particularly useful?",
           options: [
-            "Both GAAP and IFRS",
-            "Only GAAP",
-            "Only IFRS",
-            "Neither GAAP nor IFRS"
+            "When comparing companies with significant depreciation expenses",
+            "When calculating taxes",
+            "When predicting stock prices",
+            "When determining dividend payments"
           ],
-          correctAnswer: 3,
-          explanation: "EBITDA is not recognized by either GAAP or IFRS accounting standards, which is one of its limitations despite being frequently quoted."
+          correctAnswer: 0,
+          explanation: "EBITDA is particularly useful when comparing companies with significant depreciation or amortization expenses, as it removes these non-cash charges."
+        },
+        {
+          question: "What best practice should be followed when using EBITDA?",
+          options: [
+            "Use it alongside other financial measures",
+            "Use it as the only metric",
+            "Ignore depreciation completely",
+            "Focus only on net income"
+          ],
+          correctAnswer: 0,
+          explanation: "EBITDA should be used alongside other financial measures to get a complete picture of a company's financial health, not as a standalone metric."
         }
       ]
     }

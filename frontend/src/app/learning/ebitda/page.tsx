@@ -9,6 +9,8 @@ import {
 import ReactConfetti from "react-confetti";
 import { useRouter } from "next/navigation";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import VideoPlayer from '@/components/VideoPlayer';
+import { Quiz } from '@/utils/groq';
 
 // YouTube IFrame API TypeScript declarations
 declare global {
@@ -106,6 +108,9 @@ const EBITDAPage = () => {
     "ebitda"
   );
   const [videoEnded, setVideoEnded] = useState(false);
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [isLoadingQuizzes, setIsLoadingQuizzes] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const contentSections: ContentSection[] = [
     {
@@ -413,6 +418,47 @@ const EBITDAPage = () => {
       setShowCompletionModal(true);
       setShowCelebration(false);
     }, 3000);
+  };
+
+  useEffect(() => {
+    const loadQuizzes = async () => {
+      try {
+        const response = await fetch('/api/quiz', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ videoId: 'ebitda' }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to load quizzes');
+        }
+
+        const data = await response.json();
+        setQuizzes(data.quizzes);
+      } catch (error) {
+        console.error('Error loading quizzes:', error);
+        setError('Error loading quizzes');
+      } finally {
+        setIsLoadingQuizzes(false);
+      }
+    };
+
+    loadQuizzes();
+
+    // Cleanup function
+    return () => {
+      if (checkIntervalRef.current) {
+        clearInterval(checkIntervalRef.current);
+      }
+    };
+  }, []);
+
+  const handleQuizComplete = (score: number) => {
+    if (score === 100) {
+      handleCompleteModule();
+    }
   };
 
   return (

@@ -6,7 +6,8 @@ import { getQuizQuestions } from "@/data/transcripts/balance-sheet";
 import ReactConfetti from 'react-confetti';
 import { useRouter } from "next/navigation";
 import VideoPlayer from '@/components/VideoPlayer';
-// import ProtectedRoute from "@/components/ProtectedRoute";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import { Quiz } from '@/utils/groq';
 
 // YouTube IFrame API TypeScript declarations
 declare global {
@@ -87,6 +88,8 @@ const BalanceSheetPage = () => {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const playerRef = useRef<YT.Player | null>(null);
+  const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const contentSections: ContentSection[] = [
     {
@@ -187,7 +190,6 @@ const BalanceSheetPage = () => {
 
   const quizQuestions = getQuizQuestions();
 
-  // Add this useEffect to load quizzes when component mounts
   useEffect(() => {
     const loadQuizzes = async () => {
       try {
@@ -196,9 +198,7 @@ const BalanceSheetPage = () => {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            videoId: 'balance-sheet', // This should match your transcript file name
-          }),
+          body: JSON.stringify({ videoId: 'balance-sheet' }),
         });
 
         if (!response.ok) {
@@ -216,6 +216,13 @@ const BalanceSheetPage = () => {
     };
 
     loadQuizzes();
+
+    // Cleanup function
+    return () => {
+      if (checkIntervalRef.current) {
+        clearInterval(checkIntervalRef.current);
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -412,7 +419,7 @@ const BalanceSheetPage = () => {
   };
 
   return (
-    // <ProtectedRoute>
+    <ProtectedRoute>
       <div className="min-h-screen bg-white p-8">
         {showCelebration && (
           <ReactConfetti
@@ -524,7 +531,7 @@ const BalanceSheetPage = () => {
           </div>
         </div>
       </div>
-    // </ProtectedRoute>
+    </ProtectedRoute>
   );
 };
 

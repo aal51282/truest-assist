@@ -1,0 +1,28 @@
+Welcome to our lesson on EBITDA calculation. EBITDA stands for Earnings Before Interest, Taxes, Depreciation, and Amortization. It's a crucial financial metric that helps investors and analysts evaluate a company's operating performance.
+
+EBITDA is calculated by starting with a company's net income and adding back interest, taxes, depreciation, and amortization. This gives us a clearer picture of a company's operational efficiency without the impact of financing decisions, tax environments, and accounting decisions.
+
+Let's break down each component:
+1. Interest: This is added back because it represents the cost of financing and varies based on a company's debt structure.
+2. Taxes: These are added back because tax rates can vary by jurisdiction and time period.
+3. Depreciation and Amortization: These are non-cash expenses that are added back because they don't represent actual cash outflows.
+
+Here's a simple example:
+If a company has:
+- Net Income: $1,000,000
+- Interest Expense: $200,000
+- Tax Expense: $300,000
+- Depreciation: $150,000
+- Amortization: $50,000
+
+The EBITDA calculation would be:
+$1,000,000 + $200,000 + $300,000 + $150,000 + $50,000 = $1,700,000
+
+EBITDA is particularly useful when comparing companies within the same industry, as it removes the impact of financing and accounting decisions. However, it's important to note that EBITDA has limitations. It doesn't consider working capital requirements or capital expenditures, which are crucial for many businesses.
+
+Some key advantages of using EBITDA include:
+1. It provides a clearer view of operational performance
+2. It makes it easier to compare companies with different capital structures
+3. It's useful for evaluating companies with significant depreciation or amortization expenses
+
+Remember, while EBITDA is a valuable metric, it should be used alongside other financial measures to get a complete picture of a company's financial health. 

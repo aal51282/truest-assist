@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { getQuizQuestions } from "@/data/transcripts/balance-sheet";
 import ReactConfetti from 'react-confetti';
 import { useRouter } from "next/navigation";
+import VideoPlayer from '@/components/VideoPlayer';
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { Quiz } from '@/utils/groq';
 
 // YouTube IFrame API TypeScript declarations
 declare global {
@@ -79,25 +81,15 @@ interface Quiz {
 const BalanceSheetPage = () => {
   const [activeSection, setActiveSection] = useState<string>("");
   const [completedSections, setCompletedSections] = useState<string[]>([]);
-  const [showQuiz, setShowQuiz] = useState(false);
-  const [currentQuiz, setCurrentQuiz] = useState<Quiz | null>(null);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
-  const [showExplanation, setShowExplanation] = useState(false);
-  const [isCorrect, setIsCorrect] = useState(false);
-  const [quizScores, setQuizScores] = useState<{ [key: number]: number }>({});
-  const [incorrectAnswers, setIncorrectAnswers] = useState<number[]>([]);
-  const [shortAnswer, setShortAnswer] = useState<string>("");
-  const [quizBuffer, setQuizBuffer] = useState(false);
-  const [quizTimelineMarkers, setQuizTimelineMarkers] = useState<Array<{time: number, completed: boolean}>>([]);
   const [showCelebration, setShowCelebration] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [isLoadingQuizzes, setIsLoadingQuizzes] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const playerRef = useRef<YT.Player | null>(null);
   const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const router = useRouter();
-  const [videoEnded, setVideoEnded] = useState(false);
 
   const contentSections: ContentSection[] = [
     {
@@ -198,14 +190,40 @@ const BalanceSheetPage = () => {
 
   const quizQuestions = getQuizQuestions();
 
-  // Initialize quiz timeline markers
   useEffect(() => {
-    const markers = quizQuestions.map(quiz => ({
-      time: quiz.timestamp,
-      completed: completedSections.includes(`quiz-${quiz.timestamp}`)
-    }));
-    setQuizTimelineMarkers(markers);
-  }, [completedSections]);
+    const loadQuizzes = async () => {
+      try {
+        const response = await fetch('/api/quiz', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ videoId: 'balance-sheet' }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to load quizzes');
+        }
+
+        const data = await response.json();
+        setQuizzes(data.quizzes);
+      } catch (error) {
+        console.error('Error loading quizzes:', error);
+        setError('Error loading quizzes');
+      } finally {
+        setIsLoadingQuizzes(false);
+      }
+    };
+
+    loadQuizzes();
+
+    // Cleanup function
+    return () => {
+      if (checkIntervalRef.current) {
+        clearInterval(checkIntervalRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     // Clear any stored progress when component mounts
@@ -272,6 +290,7 @@ const BalanceSheetPage = () => {
     return () => clearInterval(timeUpdateInterval);
   };
 
+  // Update the player state change handler
   const onPlayerStateChange = (event: { data: number }) => {
     if (checkIntervalRef.current) {
       clearInterval(checkIntervalRef.current);
@@ -285,7 +304,6 @@ const BalanceSheetPage = () => {
       playerRef.current?.seekTo(storedTime, true);
     }
 
-    // Handle video end
     if (event.data === window.YT.PlayerState.ENDED) {
       setVideoEnded(true);
       handleCompleteModule();
@@ -293,42 +311,7 @@ const BalanceSheetPage = () => {
     }
 
     if (event.data === window.YT.PlayerState.PLAYING) {
-      // Start checking for quiz timestamps
-      checkIntervalRef.current = setInterval(() => {
-        if (!playerRef.current) return;
-        
-        const currentTime = playerRef.current.getCurrentTime();
-        const storedTime = Number(sessionStorage.getItem('videoProgress')) || 0;
-        
-        // Prevent rewinding
-        if (currentTime < storedTime) {
-          playerRef.current.seekTo(storedTime, true);
-          return;
-        }
-
-        // Skip quiz check if we're in the buffer period
-        if (quizBuffer) return;
-
-        const nextQuiz = quizQuestions.find(
-          (q) =>
-            Math.abs(q.timestamp - currentTime) < 0.5 &&
-            !completedSections.includes(`quiz-${q.timestamp}`)
-        );
-
-        if (nextQuiz) {
-          playerRef.current.pauseVideo();
-          setCurrentQuiz(nextQuiz);
-          setCurrentQuestionIndex(0);
-          setShowQuiz(true);
-          if (checkIntervalRef.current) {
-            clearInterval(checkIntervalRef.current);
-            checkIntervalRef.current = null;
-          }
-        }
-
-        // Update stored progress
-        sessionStorage.setItem('videoProgress', String(currentTime));
-      }, 500);
+      checkIntervalRef.current = setInterval(checkForQuiz, 500);
     }
   };
 
@@ -488,127 +471,28 @@ const BalanceSheetPage = () => {
             Balance Sheet Analysis
           </h1>
 
-          {/* Video Section */}
-          <div className="mb-12 relative">
-            <div className="relative" style={{ paddingBottom: "56.25%" }}>
-              <div
-                id="youtube-player"
-                className="absolute top-0 left-0 w-full h-full rounded-xl shadow-lg"
+          {/* Video Section with Knowledge Checks */}
+          <div className="mb-12">
+            {!isLoadingQuizzes ? (
+              <VideoPlayer
+                videoId="Sx2R6qS8ZJw"
+                quizzes={quizzes}
+                onQuizComplete={(score) => {
+                  // Update progress when a quiz is completed
+                  const updatedCompletedSections = [...completedSections];
+                  if (score >= 70) { // Pass threshold
+                    setShowCelebration(true);
+                    playCelebrationSound();
+                    setTimeout(() => {
+                      setShowCelebration(false);
+                    }, 3000);
+                  }
+                  setCompletedSections(updatedCompletedSections);
+                }}
               />
-            </div>
-
-            {/* Quiz Popup */}
-            {showQuiz && currentQuiz && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                <div className="bg-white p-8 rounded-xl max-w-2xl w-full mx-4 shadow-2xl transform transition-all duration-300 scale-100 opacity-100">
-                  {/* Quiz Progress Bar */}
-                  <div className="absolute top-0 left-0 w-full h-1 bg-[#F3F0F4]">
-                    <div 
-                      className="h-full bg-[#612665] transition-all duration-300"
-                      style={{ width: `${((currentQuestionIndex + 1) / currentQuiz.questions.length) * 100}%` }}
-                    />
-                  </div>
-
-                  <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-2xl font-bold text-[#612665]">Pop Quiz!</h3>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-[#612665] font-medium">
-                        Question {currentQuestionIndex + 1} of {currentQuiz.questions.length}
-                      </span>
-                    </div>
-                  </div>
-
-                  <p className="text-lg mb-6 text-[#612665]">{currentQuiz.questions[currentQuestionIndex].question}</p>
-                  
-                  <div className="space-y-4 mb-6">
-                    {currentQuiz.questions[currentQuestionIndex].options.map((option, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleAnswerSelect(index)}
-                        disabled={incorrectAnswers.includes(index) || (showExplanation && isCorrect)}
-                        className={`w-full p-4 text-left rounded-lg border-2 transition-all duration-300
-                          ${incorrectAnswers.includes(index)
-                            ? 'border-red-500 bg-red-50 opacity-50 cursor-not-allowed'
-                            : selectedAnswer === index 
-                              ? isCorrect 
-                                ? 'border-green-500 bg-green-50 animate-pulse'
-                                : 'border-red-500 bg-red-50'
-                              : 'border-[#F3F0F4] hover:border-[#612665] hover:shadow-md'
-                          }
-                        `}
-                      >
-                        <div className="flex items-center space-x-3">
-                          <div className={`w-6 h-6 rounded-full flex items-center justify-center
-                            ${selectedAnswer === index && isCorrect
-                              ? 'bg-green-500 text-white'
-                              : selectedAnswer === index
-                                ? 'bg-red-500 text-white'
-                                : 'border-2 border-[#612665]'
-                            }`}
-                          >
-                            {selectedAnswer === index && isCorrect && (
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                              </svg>
-                            )}
-                          </div>
-                          <span>{option}</span>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-
-                  {showExplanation && (
-                    <div
-                      className={`p-4 rounded-lg mb-6 ${
-                        isCorrect
-                          ? "bg-green-50 text-green-800"
-                          : "bg-red-50 text-red-800"
-                      }`}
-                    >
-                      <p className="font-semibold mb-2">
-                        {isCorrect ? "Correct!" : "Not quite right."}
-                      </p>
-                      <p>
-                        {currentQuiz.questions[currentQuestionIndex].explanation}
-                      </p>
-                    </div>
-                  )}
-
-                  {showExplanation && (
-                    <button
-                      onClick={handleNextQuestion}
-                      disabled={isSubmitting}
-                      className={`w-full py-3 px-4 bg-[#612665] text-white rounded-lg transition-colors ${
-                        isSubmitting 
-                          ? 'opacity-50 cursor-not-allowed'
-                          : 'hover:bg-[#4d1e51]'
-                      }`}
-                    >
-                      {isSubmitting ? (
-                        <span className="flex items-center justify-center">
-                          <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          Processing...
-                        </span>
-                      ) : currentQuestionIndex < currentQuiz.questions.length - 1 ? (
-                        "Next Question"
-                      ) : (
-                        "Continue Video"
-                      )}
-                    </button>
-                  )}
-
-                  {showExplanation &&
-                    currentQuestionIndex === currentQuiz.questions.length - 1 && (
-                      <div className="mt-4 text-center text-[#612665]">
-                        Quiz Score: {quizScores[currentQuiz.timestamp] || 0} /{" "}
-                        {currentQuiz.questions.length}
-                      </div>
-                    )}
-                </div>
+            ) : (
+              <div className="flex items-center justify-center p-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#612665] border-t-transparent"></div>
               </div>
             )}
           </div>

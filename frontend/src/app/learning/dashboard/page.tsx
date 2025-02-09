@@ -21,7 +21,7 @@ interface Module {
 
 const DashboardPage = () => {
   const [selectedModule, setSelectedModule] = useState<string>("balance-sheet");
-  const [playerRef, setPlayerRef] = useState<any>(null);
+  const [playerRef, setPlayerRef] = useState<YT.Player | null>(null);
 
   const modules: Module[] = [
     {
@@ -33,27 +33,38 @@ const DashboardPage = () => {
     {
       id: "ebitda",
       title: "EBITDA Calculation",
+      videoId: "I7ND6z5eXmo",
       description: "Master the calculation and interpretation of EBITDA metrics"
     },
     {
       id: "horizontal",
       title: "Horizontal Analysis",
+      videoId: "MwMZATCDas4",
       description: "Compare financial metrics across time periods and identify key trends"
     }
   ];
 
+  const selectedModuleData = modules.find(m => m.id === selectedModule);
+
   // Initialize YouTube player when component mounts
   React.useEffect(() => {
-    // Load YouTube API
-    const tag = document.createElement("script");
-    tag.src = "https://www.youtube.com/iframe_api";
-    const firstScriptTag = document.getElementsByTagName("script")[0];
-    firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+    // Clean up previous player
+    if (playerRef) {
+      playerRef.destroy?.();
+    }
+
+    // Load YouTube API if not already loaded
+    if (!window.YT) {
+      const tag = document.createElement("script");
+      tag.src = "https://www.youtube.com/iframe_api";
+      const firstScriptTag = document.getElementsByTagName("script")[0];
+      firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+    }
 
     // Initialize YouTube player when API is ready
-    window.onYouTubeIframeAPIReady = () => {
+    const initPlayer = () => {
       const player = new window.YT.Player("youtube-player", {
-        videoId: "Sx2R6qS8ZJw",
+        videoId: selectedModuleData?.videoId || "Sx2R6qS8ZJw",
         playerVars: {
           controls: 1,
           disablekb: 1,
@@ -63,7 +74,20 @@ const DashboardPage = () => {
       });
       setPlayerRef(player);
     };
-  }, []);
+
+    if (window.YT && window.YT.Player) {
+      initPlayer();
+    } else {
+      window.onYouTubeIframeAPIReady = initPlayer;
+    }
+
+    // Cleanup function
+    return () => {
+      if (playerRef) {
+        playerRef.destroy?.();
+      }
+    };
+  }, [selectedModule]);
 
   const leaderboardData: LeaderboardEntry[] = [
     {
@@ -103,21 +127,21 @@ const DashboardPage = () => {
     }
   ];
 
-  const selectedModuleData = modules.find(m => m.id === selectedModule);
-
   return (
     <div className="flex min-h-screen bg-white">
       {/* Sidebar */}
       <div className="w-64 border-r border-[#F3F0F4]">
         {/* Logo */}
         <div className="p-6 border-b border-[#F3F0F4]">
-          <Image
-            src="/logo.png"
-            alt="Truest Assist Logo"
-            width={150}
-            height={32}
-            className="object-contain"
-          />
+          <Link href="/learning-path">
+            <Image
+              src="/logo.png"
+              alt="Truest Assist Logo"
+              width={150}
+              height={32}
+              className="object-contain cursor-pointer hover:opacity-80 transition-opacity"
+            />
+          </Link>
         </div>
 
         {/* Navigation Sections */}
@@ -159,28 +183,6 @@ const DashboardPage = () => {
               </li>
             </ul>
           </div>
-
-          {/* Quizzes Section */}
-          <div>
-            <h2 className="text-lg font-semibold text-[#612665] mb-4">Quizzes</h2>
-            <ul className="space-y-3">
-              <li>
-                <Link href="/learning/quiz1" className="text-[#b8a3be] hover:text-[#612665]">
-                  Quiz 1
-                </Link>
-              </li>
-              <li>
-                <Link href="/learning/quiz2" className="text-[#b8a3be] hover:text-[#612665]">
-                  Quiz 2
-                </Link>
-              </li>
-              <li>
-                <Link href="/learning/quiz3" className="text-[#b8a3be] hover:text-[#612665]">
-                  Quiz 3
-                </Link>
-              </li>
-            </ul>
-          </div>
         </div>
 
         {/* Bottom Settings and Logout */}
@@ -205,8 +207,8 @@ const DashboardPage = () => {
           <>
             <h1 className="text-3xl font-bold text-[#612665] mb-6">{selectedModuleData.title}</h1>
             <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
-              <div className="aspect-w-16 aspect-h-9 relative">
-                <div id="youtube-player" className="w-full h-full" />
+              <div className="relative" style={{ paddingBottom: "56.25%" }}>
+                <div id="youtube-player" className="absolute top-0 left-0 w-full h-full" />
               </div>
             </div>
             <p className="text-[#b8a3be] mb-8">{selectedModuleData.description}</p>
@@ -214,34 +216,100 @@ const DashboardPage = () => {
         )}
 
         {selectedModule === "balance-sheet" && (
-          <div className="mt-6 grid grid-cols-2 gap-8">
-            <div>
-              <h3 className="font-semibold text-[#612665] mb-2">Content</h3>
-              <ul className="space-y-2 text-[#b8a3be]">
-                <li>Balance Sheet Equation</li>
-                <li>Cash and Accounts Receivable</li>
-                <li>Inventory</li>
-                <li>Prepaid Expenses</li>
-                <li>Property, Plant, and Equipment</li>
-                <li>Accounts Payable</li>
-                <li>Liabilities</li>
-                <li>Deferred Revenue</li>
-                <li>Long-term Debt</li>
-              </ul>
+          <div className="mt-6">
+            <div className="grid grid-cols-2 gap-8 mb-8">
+              <div>
+                <h3 className="font-semibold text-[#612665] mb-2">Content</h3>
+                <ul className="space-y-2 text-[#b8a3be]">
+                  <li>Balance Sheet Equation</li>
+                  <li>Cash and Accounts Receivable</li>
+                  <li>Inventory</li>
+                  <li>Prepaid Expenses</li>
+                  <li>Property, Plant, and Equipment</li>
+                  <li>Accounts Payable</li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="font-semibold text-[#612665] mb-2 invisible">Content</h3>
+                <ul className="space-y-2 text-[#b8a3be]">
+                  <li>Liabilities</li>
+                  <li>Deferred Revenue</li>
+                  <li>Long-term Debt</li>
+                  <li>Assets & Liabilities</li>
+                  <li>Common Stock and Retained Earnings</li>
+                </ul>
+              </div>
             </div>
-            <div>
-              <h3 className="font-semibold text-[#612665] mb-2">Assets & Liabilities</h3>
-              <ul className="space-y-2 text-[#b8a3be]">
-                <li>Common Stock and Retained Earnings</li>
-                <li>Quiz 1</li>
-              </ul>
+            <Link 
+              href="/learning/balance-sheet"
+              className="inline-block px-6 py-3 bg-[#612665] text-white rounded-lg hover:bg-[#4d1e51] transition-colors"
+            >
+              Go to Module
+            </Link>
+          </div>
+        )}
+
+        {selectedModule === "ebitda" && (
+          <div className="mt-6">
+            <div className="grid grid-cols-2 gap-8 mb-8">
+              <div>
+                <h3 className="font-semibold text-[#612665] mb-2">Content</h3>
+                <ul className="space-y-2 text-[#b8a3be]">
+                  <li>What is EBITDA?</li>
+                  <li>EBITDA Formula</li>
+                  <li>EBITDA Example Walk Through</li>
+                  <li>Pros & Cons of Using EBITDA</li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="font-semibold text-[#612665] mb-2 invisible">Content</h3>
+                <ul className="space-y-2 text-[#b8a3be]">
+                  <li>Depreciation vs Amortization</li>
+                  <li>Capital Expenses and the Matching Principle</li>
+                  <li>The Role of FASB and Useful Life of Assets</li>
+                </ul>
+              </div>
             </div>
+            <Link 
+              href="/learning/ebitda"
+              className="inline-block px-6 py-3 bg-[#612665] text-white rounded-lg hover:bg-[#4d1e51] transition-colors"
+            >
+              Go to Module
+            </Link>
+          </div>
+        )}
+
+        {selectedModule === "horizontal" && (
+          <div className="mt-6">
+            <div className="grid grid-cols-2 gap-8 mb-8">
+              <div>
+                <h3 className="font-semibold text-[#612665] mb-2">Content</h3>
+                <ul className="space-y-2 text-[#b8a3be]">
+                  <li>Introduction to Horizontal Analysis</li>
+                  <li>Setting Up the Horizontal Analysis</li>
+                  <li>Computing Increases and Decreases</li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="font-semibold text-[#612665] mb-2 invisible">Content</h3>
+                <ul className="space-y-2 text-[#b8a3be]">
+                  <li>Calculating Percentage Changes</li>
+                  <li>Why Companies Use Horizontal Analysis</li>
+                </ul>
+              </div>
+            </div>
+            <Link 
+              href="/learning/horizontal"
+              className="inline-block px-6 py-3 bg-[#612665] text-white rounded-lg hover:bg-[#4d1e51] transition-colors"
+            >
+              Go to Module
+            </Link>
           </div>
         )}
 
         {/* Leaderboard Section */}
         <div className="mt-12">
-          <h2 className="text-2xl font-bold text-[#612665] mb-4">Leader Board</h2>
+          <h2 className="text-2xl font-bold text-[#612665] mb-4">Leaderboard</h2>
           <div className="bg-white rounded-xl border border-[#F3F0F4]">
             <div className="grid grid-cols-4 p-4 border-b border-[#F3F0F4] font-semibold text-[#612665]">
               <div>Name</div>

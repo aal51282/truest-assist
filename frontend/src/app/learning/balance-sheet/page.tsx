@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { getQuizQuestions } from "@/data/transcripts/balance-sheet";
 import ReactConfetti from 'react-confetti';
@@ -98,6 +98,9 @@ const BalanceSheetPage = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const router = useRouter();
   const [videoEnded, setVideoEnded] = useState(false);
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [isLoadingQuizzes, setIsLoadingQuizzes] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const contentSections: ContentSection[] = [
     {
@@ -198,14 +201,66 @@ const BalanceSheetPage = () => {
 
   const quizQuestions = getQuizQuestions();
 
-  // Initialize quiz timeline markers
+  // Add this useEffect to load quizzes when component mounts
   useEffect(() => {
-    const markers = quizQuestions.map(quiz => ({
-      time: quiz.timestamp,
-      completed: completedSections.includes(`quiz-${quiz.timestamp}`)
-    }));
-    setQuizTimelineMarkers(markers);
-  }, [completedSections]);
+    const loadQuizzes = async () => {
+      try {
+        const response = await fetch('/api/quiz', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            videoId: 'balance-sheet', // This should match your transcript file name
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to load quizzes');
+        }
+
+        const data = await response.json();
+        setQuizzes(data.quizzes);
+        
+        // Initialize quiz timeline markers with the new quizzes
+        const markers = data.quizzes.map(quiz => ({
+          time: quiz.timestamp,
+          completed: completedSections.includes(`quiz-${quiz.timestamp}`)
+        }));
+        setQuizTimelineMarkers(markers);
+      } catch (error) {
+        console.error('Error loading quizzes:', error);
+        setError('Error loading quizzes');
+      } finally {
+        setIsLoadingQuizzes(false);
+      }
+    };
+
+    loadQuizzes();
+  }, []);
+
+  // Modify the interval check to use the loaded quizzes
+  const checkForQuiz = useCallback(() => {
+    if (!playerRef.current || quizBuffer || isLoadingQuizzes) return;
+    
+    const currentTime = playerRef.current.getCurrentTime();
+    const nextQuiz = quizzes.find(
+      (q) =>
+        Math.abs(q.timestamp - currentTime) < 0.5 &&
+        !completedSections.includes(`quiz-${q.timestamp}`)
+    );
+
+    if (nextQuiz) {
+      playerRef.current.pauseVideo();
+      setCurrentQuiz(nextQuiz);
+      setCurrentQuestionIndex(0);
+      setShowQuiz(true);
+      if (checkIntervalRef.current) {
+        clearInterval(checkIntervalRef.current);
+        checkIntervalRef.current = null;
+      }
+    }
+  }, [quizzes, quizBuffer, completedSections, isLoadingQuizzes]);
 
   useEffect(() => {
     // Clear any stored progress when component mounts
@@ -272,6 +327,7 @@ const BalanceSheetPage = () => {
     return () => clearInterval(timeUpdateInterval);
   };
 
+  // Update the player state change handler
   const onPlayerStateChange = (event: { data: number }) => {
     if (checkIntervalRef.current) {
       clearInterval(checkIntervalRef.current);
@@ -285,7 +341,6 @@ const BalanceSheetPage = () => {
       playerRef.current?.seekTo(storedTime, true);
     }
 
-    // Handle video end
     if (event.data === window.YT.PlayerState.ENDED) {
       setVideoEnded(true);
       handleCompleteModule();
@@ -293,42 +348,7 @@ const BalanceSheetPage = () => {
     }
 
     if (event.data === window.YT.PlayerState.PLAYING) {
-      // Start checking for quiz timestamps
-      checkIntervalRef.current = setInterval(() => {
-        if (!playerRef.current) return;
-        
-        const currentTime = playerRef.current.getCurrentTime();
-        const storedTime = Number(sessionStorage.getItem('videoProgress')) || 0;
-        
-        // Prevent rewinding
-        if (currentTime < storedTime) {
-          playerRef.current.seekTo(storedTime, true);
-          return;
-        }
-
-        // Skip quiz check if we're in the buffer period
-        if (quizBuffer) return;
-
-        const nextQuiz = quizQuestions.find(
-          (q) =>
-            Math.abs(q.timestamp - currentTime) < 0.5 &&
-            !completedSections.includes(`quiz-${q.timestamp}`)
-        );
-
-        if (nextQuiz) {
-          playerRef.current.pauseVideo();
-          setCurrentQuiz(nextQuiz);
-          setCurrentQuestionIndex(0);
-          setShowQuiz(true);
-          if (checkIntervalRef.current) {
-            clearInterval(checkIntervalRef.current);
-            checkIntervalRef.current = null;
-          }
-        }
-
-        // Update stored progress
-        sessionStorage.setItem('videoProgress', String(currentTime));
-      }, 500);
+      checkIntervalRef.current = setInterval(checkForQuiz, 500);
     }
   };
 
@@ -645,6 +665,80 @@ const BalanceSheetPage = () => {
               />
             </div>
           </div>
+
+          {/* Quiz Section */}
+          {!isLoadingQuizzes && quizzes.length > 0 && (
+            <div className="space-y-12 mb-8">
+              {quizzes.map((quiz, quizIndex) => {
+                const isQuizCompleted = completedSections.includes(`quiz-${quiz.timestamp}`);
+                return (
+                  <div key={quizIndex} className="bg-white p-6 rounded-xl shadow-lg border-2 border-[#F3F0F4]">
+                    <div className="flex justify-between items-center mb-6">
+                      <h3 className="text-2xl font-bold text-[#612665]">Knowledge Check {quizIndex + 1}</h3>
+                      {isQuizCompleted && (
+                        <div className="flex items-center text-green-500">
+                          <svg className="w-6 h-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          <span>Completed</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {!isQuizCompleted ? (
+                      <div>
+                        <p className="text-[#b8a3be] mb-6">
+                          Test your knowledge of the concepts covered in this section.
+                        </p>
+                        <button
+                          onClick={() => {
+                            setCurrentQuiz(quiz);
+                            setCurrentQuestionIndex(0);
+                            setShowQuiz(true);
+                            setSelectedAnswer(null);
+                            setShowExplanation(false);
+                            setIncorrectAnswers([]);
+                          }}
+                          className="px-6 py-3 bg-[#612665] text-white rounded-lg hover:bg-[#4d1e51] transition-colors"
+                        >
+                          Start Quiz
+                        </button>
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="text-[#b8a3be] mb-2">
+                          You've completed this quiz! Score: {quizScores[quiz.timestamp] || 0} / {quiz.questions.length}
+                        </p>
+                        <button
+                          onClick={() => {
+                            setCurrentQuiz(quiz);
+                            setCurrentQuestionIndex(0);
+                            setShowQuiz(true);
+                            setSelectedAnswer(null);
+                            setShowExplanation(false);
+                            setIncorrectAnswers([]);
+                          }}
+                          className="text-[#612665] hover:underline"
+                        >
+                          Retake Quiz
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Loading Overlay */}
+          {isLoadingQuizzes && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white p-8 rounded-xl shadow-xl">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#612665] border-t-transparent mx-auto"></div>
+                <p className="text-[#612665] mt-4">Loading quizzes...</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     // </ProtectedRoute>

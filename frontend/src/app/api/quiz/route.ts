@@ -7,15 +7,22 @@ export async function POST(request: Request) {
   try {
     const { videoId } = await request.json();
     
-    // Get the transcript file path
+    // Validate videoId
+    if (!videoId) {
+      return NextResponse.json(
+        { error: 'Video ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Read transcript file
     const transcriptPath = path.join(process.cwd(), 'src', 'data', 'transcripts', `${videoId}.txt`);
-    
-    // Read the transcript file
     const transcript = await fs.readFile(transcriptPath, 'utf-8');
-    
+
     // Generate quizzes using GROQ
     const quizzes = await generateQuizFromTranscript(transcript);
-    
+
+    // Cache the generated quizzes (optional - implement caching as needed)
     return NextResponse.json({ quizzes });
   } catch (error) {
     console.error('Error in quiz generation:', error);

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import YouTube from 'react-youtube';
-import { Quiz, QuizQuestion } from '../utils/groq';
+import { Quiz } from '../utils/groq';
 
 interface VideoPlayerProps {
   videoId: string;
@@ -9,7 +9,6 @@ interface VideoPlayerProps {
 }
 
 const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoId, quizzes, onQuizComplete }) => {
-  const [currentTime, setCurrentTime] = useState(0);
   const [showQuiz, setShowQuiz] = useState(false);
   const [currentQuiz, setCurrentQuiz] = useState<Quiz | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -17,24 +16,21 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoId, quizzes, onQuizCompl
   const [showExplanation, setShowExplanation] = useState(false);
   const [attempts, setAttempts] = useState<number[]>([]);
   const [score, setScore] = useState(0);
-  const playerRef = useRef<any>(null);
+  const [completedQuizzes, setCompletedQuizzes] = useState<Set<number>>(new Set());
+  const playerRef = useRef<YT.Player>();
   const checkInterval = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
-    // Sort quizzes by timestamp to ensure proper ordering
     const sortedQuizzes = [...quizzes].sort((a, b) => a.timestamp - b.timestamp);
     
-    // Check for quiz triggers every second
     checkInterval.current = setInterval(() => {
       if (!playerRef.current) return;
       
       const currentTime = Math.floor(playerRef.current.getCurrentTime());
-      setCurrentTime(currentTime);
       
-      // Find if we should show a quiz at this timestamp
       const quizToShow = sortedQuizzes.find(quiz => 
         quiz.timestamp === currentTime && 
-        !showQuiz
+        !completedQuizzes.has(quiz.timestamp)
       );
       
       if (quizToShow) {
@@ -54,7 +50,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoId, quizzes, onQuizCompl
         clearInterval(checkInterval.current);
       }
     };
-  }, [quizzes, showQuiz]);
+  }, [quizzes, showQuiz, completedQuizzes]);
 
   const handleAnswerSelect = (answerIndex: number) => {
     if (!currentQuiz) return;
@@ -63,7 +59,6 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoId, quizzes, onQuizCompl
     const isCorrect = answerIndex === currentQuiz.questions[currentQuestionIndex].correctAnswer;
 
     if (!isCorrect) {
-      // Increment attempts for this question
       const newAttempts = [...attempts];
       newAttempts[currentQuestionIndex]++;
       setAttempts(newAttempts);
@@ -77,14 +72,13 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoId, quizzes, onQuizCompl
     if (!currentQuiz) return;
 
     if (currentQuestionIndex < currentQuiz.questions.length - 1) {
-      // Move to next question
       setCurrentQuestionIndex(prev => prev + 1);
       setSelectedAnswer(null);
       setShowExplanation(false);
     } else {
-      // Quiz completed
       const finalScore = Math.round(score / currentQuiz.questions.length);
       onQuizComplete(finalScore);
+      setCompletedQuizzes(prev => new Set([...prev, currentQuiz.timestamp]));
       setShowQuiz(false);
       setCurrentQuiz(null);
       if (playerRef.current) {
@@ -93,102 +87,186 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoId, quizzes, onQuizCompl
     }
   };
 
-  const onReady = (event: any) => {
+  const onReady = (event: { target: YT.Player }) => {
     playerRef.current = event.target;
   };
 
   return (
-    <div className="relative w-full">
-      <YouTube
-        videoId={videoId}
-        opts={{
-          height: '390',
-          width: '640',
-          playerVars: {
-            autoplay: 1,
-            controls: 1,
-          },
-        }}
-        onReady={onReady}
-        className="w-full"
-      />
-      
-      {showQuiz && currentQuiz && (
-        <div className="mt-4 p-6 bg-white rounded-lg shadow-lg">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-[#612665]">Knowledge Check!</h2>
-            <div className="text-[#b8a3be]">
-              Question {currentQuestionIndex + 1} of {currentQuiz.questions.length}
-            </div>
-          </div>
+    <div className="flex flex-col lg:flex-row gap-8 max-w-[1600px] mx-auto">
+      {/* Video Section */}
+      <div className="lg:w-3/5">
+        <div className="rounded-xl overflow-hidden shadow-lg bg-white">
+          <YouTube
+            videoId={videoId}
+            opts={{
+              height: '100%',
+              width: '100%',
+              playerVars: {
+                autoplay: 1,
+                controls: 1,
+                modestbranding: 1,
+                rel: 0,
+              },
+            }}
+            onReady={onReady}
+            className="aspect-video w-full"
+          />
+        </div>
+      </div>
 
-          <div className="mb-8">
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="text-lg font-semibold text-[#612665]">
-                {currentQuiz.questions[currentQuestionIndex].question}
-              </h3>
-              <div className="text-sm text-[#b8a3be]">
-                Attempts: {attempts[currentQuestionIndex]}
-              </div>
-            </div>
-            
-            <div className="space-y-3">
-              {currentQuiz.questions[currentQuestionIndex].options.map((option, index) => (
-                <button
-                  key={index}
-                  onClick={() => !showExplanation && handleAnswerSelect(index)}
-                  disabled={showExplanation}
-                  className={`w-full p-4 text-left rounded-lg border-2 transition-colors
-                    ${selectedAnswer === index 
-                      ? index === currentQuiz.questions[currentQuestionIndex].correctAnswer
-                        ? 'border-green-500 bg-green-50'
-                        : 'border-red-500 bg-red-50'
-                      : 'border-gray-200 hover:border-[#612665]'
-                    }
-                  `}
+      {/* Knowledge Checks Section */}
+      <div className="lg:w-2/5 space-y-6">
+        <div className="sticky top-4">
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h2 className="text-2xl font-bold text-[#612665] mb-6 flex items-center">
+              <span className="mr-3">📝</span>
+              Knowledge Checks
+            </h2>
+
+            <div className="space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto pr-2 custom-scrollbar">
+              {quizzes.sort((a, b) => a.timestamp - b.timestamp).map((quiz, quizIndex) => (
+                <div 
+                  key={quiz.timestamp}
+                  className={`rounded-lg transition-all duration-300 ${
+                    currentQuiz?.timestamp === quiz.timestamp
+                      ? 'transform scale-102'
+                      : ''
+                  }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <span>{option}</span>
-                    {selectedAnswer === index && (
-                      <span className={index === currentQuiz.questions[currentQuestionIndex].correctAnswer 
-                        ? 'text-green-500'
-                        : 'text-red-500'
-                      }>
-                        {index === currentQuiz.questions[currentQuestionIndex].correctAnswer ? '✓' : '✗'}
-                      </span>
+                  <div className={`p-6 rounded-lg border-2 transition-all duration-300 ${
+                    completedQuizzes.has(quiz.timestamp)
+                      ? 'border-green-500 bg-green-50'
+                      : currentQuiz?.timestamp === quiz.timestamp
+                      ? 'border-[#612665] bg-white shadow-lg'
+                      : 'border-gray-200 bg-white hover:border-[#612665]/50'
+                  }`}>
+                    <div className="flex justify-between items-center mb-4">
+                      <div className="flex items-center">
+                        <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                          completedQuizzes.has(quiz.timestamp)
+                            ? 'bg-green-500 text-white'
+                            : 'bg-[#F3F0F4] text-[#612665]'
+                        }`}>
+                          {completedQuizzes.has(quiz.timestamp) ? '✓' : quizIndex + 1}
+                        </span>
+                        <h3 className="text-lg font-semibold text-[#612665] ml-3">
+                          Check Point {quizIndex + 1}
+                        </h3>
+                      </div>
+                      <div className="text-sm font-medium px-3 py-1 rounded-full bg-[#F3F0F4] text-[#612665]">
+                        {Math.floor(quiz.timestamp / 60)}:{(quiz.timestamp % 60).toString().padStart(2, '0')}
+                      </div>
+                    </div>
+
+                    {currentQuiz?.timestamp === quiz.timestamp && showQuiz ? (
+                      <div className="space-y-6">
+                        {/* Progress Bar */}
+                        <div className="relative h-1 bg-[#F3F0F4] rounded-full overflow-hidden">
+                          <div 
+                            className="absolute left-0 top-0 h-full bg-[#612665] transition-all duration-300"
+                            style={{ width: `${((currentQuestionIndex + 1) / currentQuiz.questions.length) * 100}%` }}
+                          />
+                        </div>
+
+                        <div className="flex justify-between items-center text-sm text-[#b8a3be]">
+                          <span>Question {currentQuestionIndex + 1} of {currentQuiz.questions.length}</span>
+                          <span>Score: {score}</span>
+                        </div>
+
+                        <div className="space-y-4">
+                          <h4 className="text-lg font-medium text-[#612665]">
+                            {currentQuiz.questions[currentQuestionIndex].question}
+                          </h4>
+                          
+                          <div className="space-y-3">
+                            {currentQuiz.questions[currentQuestionIndex].options.map((option, index) => (
+                              <button
+                                key={index}
+                                onClick={() => !showExplanation && handleAnswerSelect(index)}
+                                disabled={showExplanation}
+                                className={`group w-full p-4 text-left rounded-lg border-2 transition-all duration-300
+                                  ${selectedAnswer === index 
+                                    ? index === currentQuiz.questions[currentQuestionIndex].correctAnswer
+                                      ? 'border-green-500 bg-green-50'
+                                      : 'border-red-500 bg-red-50'
+                                    : 'border-gray-200 hover:border-[#612665] hover:shadow-md'
+                                  }
+                                `}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center">
+                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center mr-3
+                                      ${selectedAnswer === index 
+                                        ? index === currentQuiz.questions[currentQuestionIndex].correctAnswer
+                                          ? 'bg-green-500 text-white'
+                                          : 'bg-red-500 text-white'
+                                        : 'border-2 border-gray-300 group-hover:border-[#612665]'
+                                      }
+                                    `}>
+                                      {selectedAnswer === index && (
+                                        index === currentQuiz.questions[currentQuestionIndex].correctAnswer 
+                                          ? '✓'
+                                          : '✗'
+                                      )}
+                                    </div>
+                                    <span className={selectedAnswer === index 
+                                      ? index === currentQuiz.questions[currentQuestionIndex].correctAnswer
+                                        ? 'text-green-700'
+                                        : 'text-red-700'
+                                      : 'text-gray-700'
+                                    }>{option}</span>
+                                  </div>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+
+                          {selectedAnswer !== null && !showExplanation && 
+                           selectedAnswer !== currentQuiz.questions[currentQuestionIndex].correctAnswer && (
+                            <div className="mt-4 p-4 bg-red-50 rounded-lg border border-red-200 text-red-700">
+                              <p className="font-medium mb-1">Not quite right!</p>
+                              <p className="text-sm">Try again! Think about what we learned in the video.</p>
+                            </div>
+                          )}
+
+                          {showExplanation && (
+                            <div className="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
+                              <div className="flex items-center mb-3">
+                                <div className="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center mr-3">
+                                  ✓
+                                </div>
+                                <p className="text-green-700 font-medium">Excellent!</p>
+                              </div>
+                              <p className="text-green-600 mb-4">
+                                {currentQuiz.questions[currentQuestionIndex].explanation}
+                              </p>
+                              <button
+                                onClick={handleNextQuestion}
+                                className="w-full py-3 px-4 bg-[#612665] text-white rounded-lg hover:bg-[#4d1e51] transition-all duration-300 transform hover:scale-102 focus:outline-none focus:ring-2 focus:ring-[#612665] focus:ring-offset-2"
+                              >
+                                {currentQuestionIndex < currentQuiz.questions.length - 1 
+                                  ? "Next Question" 
+                                  : "Continue Video"
+                                }
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-[#b8a3be] text-sm">
+                        {completedQuizzes.has(quiz.timestamp)
+                          ? "Great job! You've completed this knowledge check."
+                          : "This knowledge check will appear when you reach this point in the video."}
+                      </div>
                     )}
                   </div>
-                </button>
+                </div>
               ))}
             </div>
-
-            {selectedAnswer !== null && !showExplanation && 
-             selectedAnswer !== currentQuiz.questions[currentQuestionIndex].correctAnswer && (
-              <div className="mt-4 text-red-500">
-                Not quite right. Try again!
-              </div>
-            )}
-
-            {showExplanation && (
-              <div className="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
-                <p className="text-green-700 font-medium mb-2">Excellent!</p>
-                <p className="text-green-600">
-                  {currentQuiz.questions[currentQuestionIndex].explanation}
-                </p>
-                <button
-                  onClick={handleNextQuestion}
-                  className="mt-4 px-6 py-2 bg-[#612665] text-white rounded-lg hover:bg-[#4d1e51] transition-colors"
-                >
-                  {currentQuestionIndex < currentQuiz.questions.length - 1 
-                    ? "Next Question" 
-                    : "Continue Video"
-                  }
-                </button>
-              </div>
-            )}
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };

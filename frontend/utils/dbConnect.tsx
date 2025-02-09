@@ -6,6 +6,7 @@ const connectMongoDB = async (): Promise<void> => {
   // Returns a Promise<void> since it performs async operations without a return value.
 
   const uri = process.env.MONGODB_URI; 
+  console.log('MONGODB_URI:', process.env.MONGODB_URI);
   // Fetch the MongoDB connection string from environment variables. 
  
   // This ensures sensitive information like the URI isn't hardcoded.

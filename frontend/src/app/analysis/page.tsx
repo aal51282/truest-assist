@@ -8,21 +8,33 @@ const AnalysisPage = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState('');
   const [fileContent, setFileContent] = useState<string | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       setIsLoading(true);
+      setError(null);
       setSelectedFile(file);
       setFileName(file.name);
+      setImageUrl(null);
+      setFileContent(null);
 
       try {
-        const content = await readFileContent(file);
-        setFileContent(content);
+        if (file.type.startsWith('image/')) {
+          const url = URL.createObjectURL(file);
+          setImageUrl(url);
+        } else {
+          const content = await readFileContent(file);
+          setFileContent(content);
+        }
       } catch (error) {
         console.error('Error reading file:', error);
-        // You might want to show an error message to the user here
+        setError('Error reading file. Please try again.');
+        setFileContent(null);
+        setImageUrl(null);
       } finally {
         setIsLoading(false);
       }
@@ -34,31 +46,28 @@ const AnalysisPage = () => {
       const reader = new FileReader();
 
       reader.onload = (event) => {
-        const content = event.target?.result as string;
-        resolve(content);
+        try {
+          if (file.type === 'text/csv' || file.type === 'text/plain' || file.name.endsWith('.csv') || file.name.endsWith('.txt')) {
+            const content = event.target?.result as string;
+            resolve(content);
+          } else {
+            resolve('This file type is not supported for preview. Please use an image, text, or CSV file.');
+          }
+        } catch (error) {
+          reject(error);
+        }
       };
 
       reader.onerror = (error) => {
         reject(error);
       };
 
-      if (file.type === 'application/pdf') {
-        // For PDFs, we might need additional processing
-        reader.readAsArrayBuffer(file);
-      } else {
-        // For text files, Excel, etc.
-        reader.readAsText(file);
-      }
+      reader.readAsText(file);
     });
   };
 
   const handleContinue = async () => {
-    if (!selectedFile || !fileContent) return;
-
-    // Here you would typically:
-    // 1. Send the file to your backend
-    // 2. Process the analysis
-    // 3. Update the UI with results
+    if (!selectedFile) return;
     console.log('Processing file:', selectedFile.name);
   };
 
@@ -82,23 +91,24 @@ const AnalysisPage = () => {
                     id="file-upload"
                     className="hidden"
                     onChange={handleFileSelect}
-                    accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv"
+                    accept="image/*,.txt,.csv"
                   />
-                  <label
-                    htmlFor="file-upload"
-                    className="cursor-pointer"
-                  >
-                    <div className="flex items-center gap-4">
-                      <button className="bg-[#612665] text-white px-6 py-2 rounded-full hover:bg-[#4d1e51] transition-colors">
-                        Choose File
-                      </button>
-                      <span className="text-gray-500">
-                        {fileName || 'No file selected'}
-                      </span>
-                    </div>
-                  </label>
+                  <div className="flex items-center gap-4">
+                    <label
+                      htmlFor="file-upload"
+                      className="bg-[#612665] text-white px-6 py-2 rounded-full hover:bg-[#4d1e51] transition-colors cursor-pointer"
+                    >
+                      Choose File
+                    </label>
+                    <span className="text-gray-500">
+                      {fileName || 'No file selected'}
+                    </span>
+                  </div>
+                  {error && (
+                    <p className="text-red-500 mt-2 text-sm">{error}</p>
+                  )}
                 </div>
-                {selectedFile && (
+                {selectedFile && !error && (
                   <button
                     onClick={handleContinue}
                     className="mt-8 w-full bg-[#612665] text-white py-3 rounded-lg hover:bg-[#4d1e51] transition-colors"
@@ -120,18 +130,33 @@ const AnalysisPage = () => {
                   <h3 className="text-lg font-semibold text-[#612665] mb-4">
                     Your Balance Sheet
                   </h3>
-                  <div className="bg-gray-50 p-4 rounded-lg min-h-[400px]">
+                  <div className="bg-gray-50 p-4 rounded-lg" style={{ height: '500px' }}>
                     {isLoading ? (
                       <div className="flex items-center justify-center h-full">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#612665]"></div>
                       </div>
+                    ) : error ? (
+                      <div className="flex items-center justify-center h-full text-red-500">
+                        {error}
+                      </div>
+                    ) : imageUrl ? (
+                      <div className="relative w-full h-full">
+                        <Image
+                          src={imageUrl}
+                          alt="Uploaded balance sheet"
+                          fill
+                          style={{ objectFit: 'contain' }}
+                          className="rounded-lg"
+                          priority
+                        />
+                      </div>
                     ) : fileContent ? (
-                      <div className="whitespace-pre-wrap font-mono text-sm overflow-auto max-h-[400px]">
+                      <div className="whitespace-pre-wrap font-mono text-sm overflow-auto h-full">
                         {fileContent}
                       </div>
                     ) : (
                       <div className="flex items-center justify-center h-full text-gray-400">
-                        Upload a file to see its contents here
+                        Upload an image, text, or CSV file to see its contents here
                       </div>
                     )}
                   </div>
@@ -142,14 +167,17 @@ const AnalysisPage = () => {
                   <h3 className="text-lg font-semibold text-[#612665] mb-4">
                     Company Analysis
                   </h3>
-                  <div className="bg-gray-50 p-4 rounded-lg min-h-[400px] relative">
-                    <Image
-                      src="/walmart.png"
-                      alt="Walmart Balance Sheet"
-                      layout="fill"
-                      objectFit="contain"
-                      className="rounded-lg"
-                    />
+                  <div className="bg-gray-50 p-4 rounded-lg" style={{ height: '500px' }}>
+                    <div className="relative w-full h-full">
+                      <Image
+                        src="/walmart.png"
+                        alt="Walmart Balance Sheet"
+                        fill
+                        style={{ objectFit: 'contain' }}
+                        className="rounded-lg"
+                        priority
+                      />
+                    </div>
                   </div>
                 </div>
 

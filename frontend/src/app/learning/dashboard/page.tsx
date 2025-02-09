@@ -20,10 +20,20 @@ interface Module {
   description: string;
 }
 
+interface Achievement {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  isUnlocked: boolean;
+  progress?: number;
+}
+
 const DashboardPage = () => {
   const [selectedModule, setSelectedModule] = useState<string>("balance-sheet");
   const [playerRef, setPlayerRef] = useState<YT.Player | null>(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showAllAchievements, setShowAllAchievements] = useState(false);
   const router = useRouter();
 
   const modules: Module[] = [
@@ -51,6 +61,41 @@ const DashboardPage = () => {
   ];
 
   const selectedModuleData = modules.find((m) => m.id === selectedModule);
+
+  const achievements: Achievement[] = [
+    {
+      id: "first_module",
+      title: "First Steps",
+      description: "Complete your first learning module",
+      icon: "🎯",
+      isUnlocked: true,
+      progress: 80,
+    },
+    {
+      id: "quiz_master",
+      title: "Quiz Master",
+      description: "Score 100% on any quiz",
+      icon: "🏆",
+      isUnlocked: false,
+      progress: 40,
+    },
+    {
+      id: "balance_expert",
+      title: "Balance Expert",
+      description: "Complete the Balance Sheet module",
+      icon: "📊",
+      isUnlocked: false,
+      progress: 20,
+    },
+    {
+      id: "streak_3",
+      title: "On Fire!",
+      description: "Login 3 days in a row",
+      icon: "🔥",
+      isUnlocked: false,
+      progress: 66,
+    },
+  ];
 
   // Initialize YouTube player when component mounts
   React.useEffect(() => {
@@ -226,6 +271,65 @@ const DashboardPage = () => {
                 </Link>
               </li>
             </ul>
+          </div>
+
+          {/* Achievements Section */}
+          <div>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold text-[#612665]">Achievements</h2>
+              <button
+                onClick={() => setShowAllAchievements(!showAllAchievements)}
+                className="text-sm text-[#612665] hover:underline flex items-center gap-1"
+              >
+                {showAllAchievements ? (
+                  <>
+                    Show less
+                    <span className="text-xs">↑</span>
+                  </>
+                ) : (
+                  <>
+                    Show all
+                    <span className="text-xs">↓</span>
+                  </>
+                )}
+              </button>
+            </div>
+            <div className="space-y-3">
+              {achievements
+                .slice(0, showAllAchievements ? achievements.length : 3)
+                .map((achievement) => (
+                <div
+                  key={achievement.id}
+                  className={`p-3 rounded-lg border-2 transition-colors ${
+                    achievement.isUnlocked
+                      ? "border-[#612665] bg-[#F3F0F4]"
+                      : "border-[#F3F0F4]"
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl">{achievement.icon}</span>
+                    <div className="flex-1">
+                      <h3 className={`font-semibold ${
+                        achievement.isUnlocked ? "text-[#612665]" : "text-[#b8a3be]"
+                      }`}>
+                        {achievement.title}
+                      </h3>
+                      <p className="text-xs text-[#b8a3be] mb-2">
+                        {achievement.description}
+                      </p>
+                      {achievement.progress !== undefined && (
+                        <div className="w-full h-1.5 bg-[#F3F0F4] rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-[#612665] rounded-full transition-all"
+                            style={{ width: `${achievement.progress}%` }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 

@@ -45,3 +45,5 @@ next-env.d.ts
 
 # cursor rules
 .cursorrules
+
+HUGGING_FACE_API_KEY=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

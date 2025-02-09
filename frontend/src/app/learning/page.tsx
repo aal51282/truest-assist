@@ -8,8 +8,8 @@ const LearningPage = () => {
   return (
     <div className="min-h-screen bg-white p-8 max-w-2xl mx-auto">
       {/* Back Button */}
-      <Link 
-        href="/learning-path" 
+      <Link
+        href="/learning-path"
         className="inline-flex items-center text-[#612665] hover:underline mb-8"
       >
         <span className="mr-2">←</span>
@@ -28,8 +28,12 @@ const LearningPage = () => {
             priority
           />
         </div>
-        <h1 className="text-4xl font-bold text-[#612665] mb-4">Learning Modules</h1>
-        <p className="text-xl text-[#b8a3be]">Select a module to begin your learning journey</p>
+        <h1 className="text-4xl font-bold text-[#612665] mb-4">
+          Learning Modules
+        </h1>
+        <p className="text-xl text-[#b8a3be]">
+          Select a module to begin your learning journey
+        </p>
       </div>
 
       {/* Learning Modules */}
@@ -41,9 +45,12 @@ const LearningPage = () => {
                 📊
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-[#612665] mb-2">Balance Sheet Analysis</h2>
+                <h2 className="text-2xl font-bold text-[#612665] mb-2">
+                  Balance Sheet Analysis
+                </h2>
                 <p className="text-[#b8a3be]">
-                  Learn to analyze balance sheets and understand key financial ratios
+                  Learn to analyze balance sheets and understand key financial
+                  ratios
                 </p>
                 <div className="mt-4 flex items-center text-sm text-[#612665]">
                   <span className="mr-4">🕒 10 mins</span>
@@ -61,12 +68,14 @@ const LearningPage = () => {
                 💡
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-[#612665] mb-2">EBITDA Calculation</h2>
+                <h2 className="text-2xl font-bold text-[#612665] mb-2">
+                  EBITDA Calculation
+                </h2>
                 <p className="text-[#b8a3be]">
                   Master the calculation and interpretation of EBITDA metrics
                 </p>
                 <div className="mt-4 flex items-center text-sm text-[#612665]">
-                  <span className="mr-4">🕒 45 mins</span>
+                  <span className="mr-4">🕒 10 mins</span>
                   <span>🎯 Intermediate</span>
                 </div>
               </div>
@@ -81,18 +90,31 @@ const LearningPage = () => {
                 📈
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-[#612665] mb-2">Horizontal Analysis</h2>
+                <h2 className="text-2xl font-bold text-[#612665] mb-2">
+                  Horizontal Analysis
+                </h2>
                 <p className="text-[#b8a3be]">
-                  Compare financial metrics across time periods and identify key trends
+                  Compare financial metrics across time periods and identify key
+                  trends
                 </p>
                 <div className="mt-4 flex items-center text-sm text-[#612665]">
-                  <span className="mr-4">🕒 60 mins</span>
+                  <span className="mr-4">🕒 15 mins</span>
                   <span>🌟 Advanced</span>
                 </div>
               </div>
             </div>
           </div>
         </Link>
+
+        {/* Go to Dashboard Button */}
+        <div className="text-center mt-12">
+          <Link
+            href="/learning/dashboard"
+            className="inline-block px-8 py-4 bg-[#612665] text-white rounded-lg hover:bg-[#4d1e51] transition-colors text-lg font-semibold"
+          >
+            Go to Dashboard
+          </Link>
+        </div>
       </div>
     </div>
   );

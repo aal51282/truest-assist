@@ -133,7 +133,7 @@ const DashboardPage = () => {
   return (
     <div className="flex min-h-screen bg-white">
       {/* Sidebar */}
-      <div className="w-64 border-r border-[#F3F0F4]">
+      <div className="w-64 border-r border-[#F3F0F4] fixed h-screen flex flex-col">
         {/* Logo */}
         <div className="p-6 border-b border-[#F3F0F4]">
           <Link href="/learning-path">
@@ -148,12 +148,10 @@ const DashboardPage = () => {
         </div>
 
         {/* Navigation Sections */}
-        <div className="p-6 space-y-8">
+        <div className="p-6 space-y-8 flex-grow overflow-y-auto">
           {/* Modules Section */}
           <div>
-            <h2 className="text-lg font-semibold text-[#612665] mb-4">
-              Modules
-            </h2>
+            <h2 className="text-lg font-semibold text-[#612665] mb-4">Modules</h2>
             <ul className="space-y-3">
               {modules.map((module) => (
                 <li key={module.id}>
@@ -174,23 +172,15 @@ const DashboardPage = () => {
 
           {/* Learn More Section */}
           <div>
-            <h2 className="text-lg font-semibold text-[#612665] mb-4">
-              Learn More
-            </h2>
+            <h2 className="text-lg font-semibold text-[#612665] mb-4">Learn More</h2>
             <ul className="space-y-3">
               <li>
-                <Link
-                  href="/learning/videos"
-                  className="text-[#b8a3be] hover:text-[#612665]"
-                >
+                <Link href="/learning/videos" className="text-[#b8a3be] hover:text-[#612665]">
                   Videos
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/learning/practice"
-                  className="text-[#b8a3be] hover:text-[#612665]"
-                >
+                <Link href="/learning/practice" className="text-[#b8a3be] hover:text-[#612665]">
                   Practice
                 </Link>
               </li>
@@ -199,32 +189,23 @@ const DashboardPage = () => {
         </div>
 
         {/* Bottom Settings and Logout */}
-        <div className="absolute bottom-0 left-0 w-64 p-6 space-y-4 border-t border-[#F3F0F4] bg-white">
-          <Link
-            href="/settings"
-            className="flex items-center text-[#b8a3be] hover:text-[#612665]"
-          >
+        <div className="p-6 space-y-4 border-t border-[#F3F0F4] bg-white">
+          <Link href="/settings" className="flex items-center text-[#b8a3be] hover:text-[#612665]">
             <span className="mr-2">⚙️</span>
             Settings
           </Link>
-          <Link
-            href="/logout"
-            className="flex items-center text-[#b8a3be] hover:text-[#612665]"
-          >
+          <Link href="/logout" className="flex items-center text-[#b8a3be] hover:text-[#612665]">
             <span className="mr-2">🚪</span>
             Logout
           </Link>
           <div className="text-xs text-[#b8a3be] mt-4">
-            Need Help?{" "}
-            <Link href="/help" className="text-[#612665]">
-              Ask TrustBot
-            </Link>
+            Need Help? <Link href="/help" className="text-[#612665]">Ask TrustBot</Link>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 p-8">
+      <div className="flex-1 p-8 ml-64">
         {selectedModuleData && (
           <>
             <h1 className="text-3xl font-bold text-[#612665] mb-6">

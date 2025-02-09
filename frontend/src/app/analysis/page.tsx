@@ -7,13 +7,59 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 const AnalysisPage = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState('');
+  const [fileContent, setFileContent] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      setIsLoading(true);
       setSelectedFile(file);
       setFileName(file.name);
+
+      try {
+        const content = await readFileContent(file);
+        setFileContent(content);
+      } catch (error) {
+        console.error('Error reading file:', error);
+        // You might want to show an error message to the user here
+      } finally {
+        setIsLoading(false);
+      }
     }
+  };
+
+  const readFileContent = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = (event) => {
+        const content = event.target?.result as string;
+        resolve(content);
+      };
+
+      reader.onerror = (error) => {
+        reject(error);
+      };
+
+      if (file.type === 'application/pdf') {
+        // For PDFs, we might need additional processing
+        reader.readAsArrayBuffer(file);
+      } else {
+        // For text files, Excel, etc.
+        reader.readAsText(file);
+      }
+    });
+  };
+
+  const handleContinue = async () => {
+    if (!selectedFile || !fileContent) return;
+
+    // Here you would typically:
+    // 1. Send the file to your backend
+    // 2. Process the analysis
+    // 3. Update the UI with results
+    console.log('Processing file:', selectedFile.name);
   };
 
   return (
@@ -36,7 +82,7 @@ const AnalysisPage = () => {
                     id="file-upload"
                     className="hidden"
                     onChange={handleFileSelect}
-                    accept=".pdf,.doc,.docx,.xls,.xlsx"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv"
                   />
                   <label
                     htmlFor="file-upload"
@@ -54,6 +100,7 @@ const AnalysisPage = () => {
                 </div>
                 {selectedFile && (
                   <button
+                    onClick={handleContinue}
                     className="mt-8 w-full bg-[#612665] text-white py-3 rounded-lg hover:bg-[#4d1e51] transition-colors"
                   >
                     Continue
@@ -73,14 +120,20 @@ const AnalysisPage = () => {
                   <h3 className="text-lg font-semibold text-[#612665] mb-4">
                     Your Balance Sheet
                   </h3>
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <Image
-                      src="/balance-sheet-example.png"
-                      alt="Balance Sheet"
-                      width={300}
-                      height={400}
-                      className="w-full object-contain"
-                    />
+                  <div className="bg-gray-50 p-4 rounded-lg min-h-[400px]">
+                    {isLoading ? (
+                      <div className="flex items-center justify-center h-full">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#612665]"></div>
+                      </div>
+                    ) : fileContent ? (
+                      <div className="whitespace-pre-wrap font-mono text-sm overflow-auto max-h-[400px]">
+                        {fileContent}
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center h-full text-gray-400">
+                        Upload a file to see its contents here
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -89,13 +142,13 @@ const AnalysisPage = () => {
                   <h3 className="text-lg font-semibold text-[#612665] mb-4">
                     Company Analysis
                   </h3>
-                  <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className="bg-gray-50 p-4 rounded-lg min-h-[400px] relative">
                     <Image
-                      src="/company-analysis.png"
-                      alt="Company Analysis"
-                      width={300}
-                      height={400}
-                      className="w-full object-contain"
+                      src="/walmart.png"
+                      alt="Walmart Balance Sheet"
+                      layout="fill"
+                      objectFit="contain"
+                      className="rounded-lg"
                     />
                   </div>
                 </div>

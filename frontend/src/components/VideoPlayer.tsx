@@ -14,6 +14,8 @@ interface AnsweredQuestion {
   isCorrect: boolean;
 }
 
+const VIDEO_LENGTH_SECONDS = 900; // 15 minutes
+
 const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoId, quizzes, onQuizComplete }) => {
   const [showQuiz, setShowQuiz] = useState(false);
   const [currentQuiz, setCurrentQuiz] = useState<Quiz | null>(null);
@@ -28,14 +30,33 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoId, quizzes, onQuizCompl
   const checkInterval = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    const sortedQuizzes = [...quizzes].sort((a, b) => a.timestamp - b.timestamp);
-    
+    const checkForQuiz = () => {
+      if (!playerRef.current || showQuiz) return;
+
+      const currentTime = playerRef.current.getCurrentTime();
+      
+      // Don't check for quizzes past the video length
+      if (currentTime >= VIDEO_LENGTH_SECONDS) return;
+
+      const nextQuiz = quizzes.find(quiz => 
+        quiz.timestamp <= currentTime && 
+        quiz.timestamp > (currentTime - 2) && 
+        quiz.timestamp < VIDEO_LENGTH_SECONDS
+      );
+
+      if (nextQuiz) {
+        setCurrentQuiz(nextQuiz);
+        setShowQuiz(true);
+        playerRef.current.pauseVideo();
+      }
+    };
+
     checkInterval.current = setInterval(() => {
       if (!playerRef.current) return;
       
       const currentTime = Math.floor(playerRef.current.getCurrentTime());
       
-      const quizToShow = sortedQuizzes.find(quiz => 
+      const quizToShow = quizzes.find(quiz => 
         quiz.timestamp === currentTime && 
         !completedQuizzes.has(quiz.timestamp)
       );
@@ -77,13 +98,9 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoId, quizzes, onQuizCompl
 
     setSelectedAnswer(answerIndex);
 
-    if (!isCorrect) {
-      const newAttempts = [...attempts];
-      newAttempts[currentQuestionIndex]++;
-      setAttempts(newAttempts);
-    } else {
+    if (isCorrect) {
       setShowExplanation(true);
-      setScore(prev => prev + Math.max(0, 100 - attempts[currentQuestionIndex] * 20));
+      setScore(prev => prev + 100);
     }
   };
 
@@ -256,7 +273,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ videoId, quizzes, onQuizCompl
                            selectedAnswer !== currentQuiz.questions[currentQuestionIndex].correctAnswer && (
                             <div className="mt-4 p-4 bg-red-50 rounded-lg border border-red-200 text-red-700">
                               <p className="font-medium mb-1">Not quite right!</p>
-                              <p className="text-sm">Try again! Think about what we learned in the video.</p>
+                              <p className="text-sm">Try again! Select another answer.</p>
                             </div>
                           )}
 

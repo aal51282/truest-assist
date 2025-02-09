@@ -16,6 +16,8 @@ export interface Quiz {
   questions: QuizQuestion[];
 }
 
+const VIDEO_LENGTH_SECONDS = 900; // 15 minutes
+
 // Helper function to convert timestamp string to seconds
 function convertTimestampToSeconds(timestamp: string): number {
   const match = timestamp.match(/\[(\d{2}):(\d{2})\]/);
@@ -27,7 +29,9 @@ function convertTimestampToSeconds(timestamp: string): number {
 export async function generateQuizFromTranscript(transcript: string): Promise<Quiz[]> {
   // First, parse the transcript to find natural break points
   const timestampMatches = transcript.match(/\[\d{2}:\d{2}\]/g) || [];
-  const timestamps = timestampMatches.map(convertTimestampToSeconds);
+  const timestamps = timestampMatches
+    .map(convertTimestampToSeconds)
+    .filter(timestamp => timestamp < VIDEO_LENGTH_SECONDS); // Filter out timestamps beyond video length
 
   const prompt = `
     You are an expert financial educator creating interactive video quizzes. Given the following video transcript, create unique and engaging quizzes that will appear at specific timestamps.
@@ -37,7 +41,7 @@ export async function generateQuizFromTranscript(transcript: string): Promise<Qu
     
     Requirements for the quizzes:
     1. Create exactly one quiz for each of these timestamps: ${timestamps.slice(1).join(', ')} seconds
-    2. Each quiz should have 2-3 multiple choice questions about the content covered since the previous timestamp
+    2. Each quiz should have EXACTLY 3 multiple choice questions about the content covered since the previous timestamp
     3. Questions should test comprehension and critical thinking, not just recall
     4. Provide 4 clear and distinct options for each question
     5. Include a detailed explanation for why the correct answer is right
@@ -99,13 +103,17 @@ export async function generateQuizFromTranscript(transcript: string): Promise<Qu
 
     const quizzes = JSON.parse(jsonMatch[0]) as Quiz[];
     
-    // Validate quiz structure
+    // Validate quiz structure and ensure exactly 3 questions
     if (!Array.isArray(quizzes) || quizzes.length === 0) {
       throw new Error('Invalid quiz structure');
     }
 
-    // Ensure timestamps match our expected break points
-    const validQuizzes = quizzes.filter(quiz => timestamps.includes(quiz.timestamp));
+    // Ensure each quiz has exactly 3 questions
+    const validQuizzes = quizzes.filter(quiz => 
+      timestamps.includes(quiz.timestamp) && 
+      quiz.timestamp < VIDEO_LENGTH_SECONDS &&
+      quiz.questions.length === 3
+    );
 
     // Sort quizzes by timestamp
     return validQuizzes.sort((a, b) => a.timestamp - b.timestamp);

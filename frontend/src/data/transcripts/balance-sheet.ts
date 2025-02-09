@@ -14,8 +14,8 @@ interface TranscriptSegment {
 
 export const balanceSheetTranscript: TranscriptSegment[] = [
   {
-    startTime: 120,
-    endTime: 121,
+    startTime: 90,
+    endTime: 91,
     text: "Let's check your understanding of the basic balance sheet concepts.",
     quiz: {
       questions: [
@@ -56,8 +56,8 @@ export const balanceSheetTranscript: TranscriptSegment[] = [
     }
   },
   {
-    startTime: 210,
-    endTime: 211,
+    startTime: 180,
+    endTime: 181,
     text: "Let's test your knowledge of current assets and liabilities.",
     quiz: {
       questions: [
@@ -98,8 +98,8 @@ export const balanceSheetTranscript: TranscriptSegment[] = [
     }
   },
   {
-    startTime: 315,
-    endTime: 316,
+    startTime: 270,
+    endTime: 271,
     text: "Let's review your understanding of different types of liabilities.",
     quiz: {
       questions: [
@@ -140,8 +140,8 @@ export const balanceSheetTranscript: TranscriptSegment[] = [
     }
   },
   {
-    startTime: 420,
-    endTime: 421,
+    startTime: 360,
+    endTime: 361,
     text: "Final review of advanced concepts.",
     quiz: {
       questions: [

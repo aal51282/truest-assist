@@ -1,19 +1,78 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Logo from '@/components/Logo';
 import Input from '@/components/Input';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { setIsLoggedIn, setUser } = useAuth();
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // For now, allow any login attempt and redirect to learning path
-    router.push('/learning-path');
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    // Clear error when user starts typing
+    if (error) setError('');
   };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+        credentials: 'include',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Login failed');
+      }
+
+      // Update auth context
+      setIsLoggedIn(true);
+      if (data.user) {
+        setUser(data.user);
+        localStorage.setItem('user', JSON.stringify(data.user));
+      }
+
+      // Get the redirect URL from search params or default to learning path
+      const redirectPath = searchParams?.get('redirect');
+      router.push(redirectPath || '/learning-path');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // If user is already logged in, redirect to learning path
+  useEffect(() => {
+    const token = document.cookie.includes('token=');
+    if (token) {
+      router.push('/learning-path');
+    }
+  }, [router]);
 
   return (
     <div className="min-h-screen bg-white">
@@ -40,12 +99,20 @@ export default function LoginPage() {
           </div>
           
           <form onSubmit={handleSubmit} className="space-y-6">
+            {error && (
+              <div className="bg-red-50 text-red-500 p-3 rounded-lg text-sm">
+                {error}
+              </div>
+            )}
+            
             <Input
-              label="User ID"
-              type="text"
-              name="userId"
+              label="Email"
+              type="email"
+              name="email"
               required
-              autoComplete="username"
+              autoComplete="email"
+              value={formData.email}
+              onChange={handleInputChange}
             />
             
             <Input
@@ -54,6 +121,8 @@ export default function LoginPage() {
               name="password"
               required
               autoComplete="current-password"
+              value={formData.password}
+              onChange={handleInputChange}
             />
             
             <div className="flex items-center">
@@ -69,9 +138,10 @@ export default function LoginPage() {
             
             <button
               type="submit"
-              className="w-full py-3 px-4 bg-[#612665] text-white rounded-lg hover:bg-[#4d1e51] transition-colors text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-[#612665] focus:ring-offset-2"
+              disabled={isLoading}
+              className="w-full py-3 px-4 bg-[#612665] text-white rounded-lg hover:bg-[#4d1e51] transition-colors text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-[#612665] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Login
+              {isLoading ? 'Logging in...' : 'Login'}
             </button>
           </form>
           

@@ -6,23 +6,30 @@ import Input from "@/components/Input";
 import Link from "next/link";
 import GoalsSelection from "@/components/GoalsSelection";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 
 export default function SignUp() {
   const [step, setStep] = useState(1);
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const { setIsLoggedIn, setUser } = useAuth();
+  const router = useRouter();
+
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
-    userId: "",
+    username: "",
     email: "",
     password: "",
     confirmPassword: "",
   });
-  const router = useRouter();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    // Clear error when user starts typing
+    if (error) setError('');
   };
 
   const handleGoalToggle = (goalId: string) => {
@@ -33,15 +40,70 @@ export default function SignUp() {
     );
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const validateForm = () => {
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return false;
+    }
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      return false;
+    }
+    return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (step === 1) {
+      if (!validateForm()) return;
       setStep(2);
-    } else {
-      // Handle final submission with both formData and selectedGoals
-      console.log({ ...formData, goals: selectedGoals });
+      return;
+    }
+
+    // Step 2 submission (final)
+    setError('');
+    setIsLoading(true);
+
+    try {
+      // Create the user
+      const signupResponse = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: formData.username,
+          email: formData.email,
+          password: formData.password,
+        }),
+        credentials: 'include',
+      });
+
+      const data = await signupResponse.json();
+
+      if (!signupResponse.ok) {
+        throw new Error(data.message || 'Registration failed');
+      }
+
+      // Update auth context
+      setIsLoggedIn(true);
+      if (data.data) {
+        const userData = {
+          id: data.data.id,
+          username: data.data.username,
+        };
+        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
+      }
+
       // Redirect to learning path
       router.push('/learning-path');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
+      setStep(1); // Go back to first step if there's an error
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -76,6 +138,12 @@ export default function SignUp() {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-6">
+                {error && (
+                  <div className="bg-red-50 text-red-500 p-3 rounded-lg text-sm">
+                    {error}
+                  </div>
+                )}
+
                 <div className="grid grid-cols-2 gap-4">
                   <Input
                     label="First Name"
@@ -99,12 +167,12 @@ export default function SignUp() {
                 </div>
 
                 <Input
-                  label="User ID"
+                  label="Username"
                   type="text"
-                  name="userId"
+                  name="username"
                   required
                   autoComplete="username"
-                  value={formData.userId}
+                  value={formData.username}
                   onChange={handleInputChange}
                 />
 
@@ -159,14 +227,21 @@ export default function SignUp() {
 
                 <button
                   type="submit"
-                  className="w-full py-3 px-4 bg-[#612665] text-white rounded-lg hover:bg-[#4d1e51] transition-colors text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-[#612665] focus:ring-offset-2"
+                  disabled={isLoading}
+                  className="w-full py-3 px-4 bg-[#612665] text-white rounded-lg hover:bg-[#4d1e51] transition-colors text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-[#612665] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Continue
+                  {isLoading ? 'Processing...' : 'Continue'}
                 </button>
               </form>
             </>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-8">
+              {error && (
+                <div className="bg-red-50 text-red-500 p-3 rounded-lg text-sm">
+                  {error}
+                </div>
+              )}
+              
               <GoalsSelection
                 selectedGoals={selectedGoals}
                 onGoalToggle={handleGoalToggle}
@@ -174,9 +249,10 @@ export default function SignUp() {
 
               <button
                 type="submit"
-                className="w-full py-3 px-4 bg-[#612665] text-white rounded-lg hover:bg-[#4d1e51] transition-colors text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-[#612665] focus:ring-offset-2"
+                disabled={isLoading}
+                className="w-full py-3 px-4 bg-[#612665] text-white rounded-lg hover:bg-[#4d1e51] transition-colors text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-[#612665] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Create Account
+                {isLoading ? 'Creating Account...' : 'Create Account'}
               </button>
             </form>
           )}

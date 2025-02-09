@@ -172,12 +172,12 @@ const DashboardPage = () => {
             <h2 className="text-lg font-semibold text-[#612665] mb-4">Learn More</h2>
             <ul className="space-y-3">
               <li>
-                <Link href="/learning/videos" className="text-[#b8a3be] hover:text-[#612665]">
+                <a href="https://www.youtube.com/@FinanceableTraining" target="_blank" rel="noopener noreferrer" className="text-[#b8a3be] hover:text-[#612665]">
                   Videos
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="/learning/practice" className="text-[#b8a3be] hover:text-[#612665]">
+                <Link href="/analysis" className="text-[#b8a3be] hover:text-[#612665]">
                   Practice
                 </Link>
               </li>

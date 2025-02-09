@@ -1,14 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Logo from '@/components/Logo';
 import Input from '@/components/Input';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { setIsLoggedIn, setUser } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
@@ -23,6 +24,8 @@ export default function LoginPage() {
       ...prev,
       [name]: value
     }));
+    // Clear error when user starts typing
+    if (error) setError('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -37,7 +40,7 @@ export default function LoginPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(formData),
-        credentials: 'include', // Important for cookies
+        credentials: 'include',
       });
 
       const data = await response.json();
@@ -53,14 +56,23 @@ export default function LoginPage() {
         localStorage.setItem('user', JSON.stringify(data.user));
       }
 
-      // Redirect to learning path
-      router.push('/learning-path');
+      // Get the redirect URL from search params or default to learning path
+      const redirectPath = searchParams?.get('redirect');
+      router.push(redirectPath || '/learning-path');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
+
+  // If user is already logged in, redirect to learning path
+  useEffect(() => {
+    const token = document.cookie.includes('token=');
+    if (token) {
+      router.push('/learning-path');
+    }
+  }, [router]);
 
   return (
     <div className="min-h-screen bg-white">

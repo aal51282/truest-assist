@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface LeaderboardEntry {
   id: number;
@@ -22,6 +23,8 @@ interface Module {
 const DashboardPage = () => {
   const [selectedModule, setSelectedModule] = useState<string>("balance-sheet");
   const [playerRef, setPlayerRef] = useState<YT.Player | null>(null);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const router = useRouter();
 
   const modules: Module[] = [
     {
@@ -130,8 +133,41 @@ const DashboardPage = () => {
     },
   ];
 
+  const handleLogout = () => {
+    setShowLogoutModal(false);
+    router.push('/splash');
+  };
+
   return (
     <div className="flex min-h-screen bg-white">
+      {/* Logout Confirmation Modal */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-xl max-w-md w-full mx-4 shadow-2xl">
+            <h2 className="text-2xl font-bold text-[#612665] mb-4">
+              Confirm Logout
+            </h2>
+            <p className="text-[#b8a3be] mb-6">
+              Are you sure you want to logout? Your progress will be saved.
+            </p>
+            <div className="flex gap-4">
+              <button
+                onClick={handleLogout}
+                className="flex-1 py-3 px-4 bg-[#612665] text-white rounded-lg hover:bg-[#4d1e51] transition-colors"
+              >
+                Yes, Logout
+              </button>
+              <button
+                onClick={() => setShowLogoutModal(false)}
+                className="flex-1 py-3 px-4 border-2 border-[#612665] text-[#612665] rounded-lg hover:bg-[#F3F0F4] transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Sidebar */}
       <div className="w-64 border-r border-[#F3F0F4] fixed h-screen flex flex-col">
         {/* Logo */}
@@ -175,12 +211,17 @@ const DashboardPage = () => {
             <h2 className="text-lg font-semibold text-[#612665] mb-4">Learn More</h2>
             <ul className="space-y-3">
               <li>
-                <Link href="/learning/videos" className="text-[#b8a3be] hover:text-[#612665]">
+                <a 
+                  href="https://www.youtube.com/@FinanceableTraining" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-[#b8a3be] hover:text-[#612665]"
+                >
                   Videos
-                </Link>
+                </a>
               </li>
               <li>
-                <Link href="/learning/practice" className="text-[#b8a3be] hover:text-[#612665]">
+                <Link href="/analysis" className="text-[#b8a3be] hover:text-[#612665]">
                   Practice
                 </Link>
               </li>
@@ -194,10 +235,13 @@ const DashboardPage = () => {
             <span className="mr-2">⚙️</span>
             Settings
           </Link>
-          <Link href="/logout" className="flex items-center text-[#b8a3be] hover:text-[#612665]">
+          <button
+            onClick={() => setShowLogoutModal(true)}
+            className="flex items-center text-[#b8a3be] hover:text-[#612665] w-full"
+          >
             <span className="mr-2">🚪</span>
             Logout
-          </Link>
+          </button>
           <div className="text-xs text-[#b8a3be] mt-4">
             Need Help? <Link href="/help" className="text-[#612665]">Ask TrustBot</Link>
           </div>
@@ -208,10 +252,10 @@ const DashboardPage = () => {
       <div className="flex-1 p-8 ml-64">
         {selectedModuleData && (
           <>
-            <h1 className="text-3xl font-bold text-[#612665] mb-6">
+            <h1 className="text-4xl font-bold text-[#612665] mb-6">
               {selectedModuleData.title}
             </h1>
-            <div className="max-w-3xl">
+            <div className="max-w-5xl">
               <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
                 <div className="relative" style={{ paddingBottom: "45%" }}>
                   <div
@@ -221,7 +265,7 @@ const DashboardPage = () => {
                 </div>
               </div>
             </div>
-            <p className="text-[#b8a3be] mb-8">
+            <p className="text-[#b8a3be] mb-8 max-w-5xl text-lg">
               {selectedModuleData.description}
             </p>
           </>
@@ -229,10 +273,10 @@ const DashboardPage = () => {
 
         {selectedModule === "balance-sheet" && (
           <div className="mt-6">
-            <div className="grid grid-cols-2 mb-8">
-              <div className="pr-16">
-                <h3 className="font-semibold text-[#612665] mb-1">Content</h3>
-                <ul className="space-y-1 text-[#b8a3be]">
+            <div className="grid grid-cols-2 gap-8 mb-8 max-w-5xl">
+              <div>
+                <h3 className="font-semibold text-[#612665] mb-2 text-xl">Content</h3>
+                <ul className="space-y-2 text-[#b8a3be] text-lg">
                   <li>Balance Sheet Equation</li>
                   <li>Cash and Accounts Receivable</li>
                   <li>Inventory</li>
@@ -241,9 +285,9 @@ const DashboardPage = () => {
                   <li>Accounts Payable</li>
                 </ul>
               </div>
-              <div className="-ml-80">
-                <h3 className="font-semibold text-[#612665] mb-1 invisible">Content</h3>
-                <ul className="space-y-1 text-[#b8a3be]">
+              <div>
+                <h3 className="font-semibold text-[#612665] mb-2 text-xl">Additional Topics</h3>
+                <ul className="space-y-2 text-[#b8a3be] text-lg">
                   <li>Liabilities</li>
                   <li>Deferred Revenue</li>
                   <li>Long-term Debt</li>
@@ -254,7 +298,7 @@ const DashboardPage = () => {
             </div>
             <Link
               href="/learning/balance-sheet"
-              className="inline-block px-6 py-3 bg-[#612665] text-white rounded-lg hover:bg-[#4d1e51] transition-colors"
+              className="inline-block px-8 py-4 bg-[#612665] text-white rounded-lg hover:bg-[#4d1e51] transition-colors text-lg"
             >
               Go to Module
             </Link>
@@ -263,8 +307,8 @@ const DashboardPage = () => {
 
         {selectedModule === "ebitda" && (
           <div className="mt-6">
-            <div className="grid grid-cols-2 mb-8">
-              <div className="pr-16">
+            <div className="grid grid-cols-2 gap-8 mb-8 max-w-4xl">
+              <div>
                 <h3 className="font-semibold text-[#612665] mb-1">Content</h3>
                 <ul className="space-y-1 text-[#b8a3be]">
                   <li>What is EBITDA?</li>
@@ -273,8 +317,8 @@ const DashboardPage = () => {
                   <li>Pros & Cons of Using EBITDA</li>
                 </ul>
               </div>
-              <div className="-ml-80">
-                <h3 className="font-semibold text-[#612665] mb-1 invisible">Content</h3>
+              <div>
+                <h3 className="font-semibold text-[#612665] mb-1">Additional Topics</h3>
                 <ul className="space-y-1 text-[#b8a3be]">
                   <li>Depreciation vs Amortization</li>
                   <li>Capital Expenses and the Matching Principle</li>
@@ -293,8 +337,8 @@ const DashboardPage = () => {
 
         {selectedModule === "horizontal" && (
           <div className="mt-6">
-            <div className="grid grid-cols-2 mb-8">
-              <div className="pr-16">
+            <div className="grid grid-cols-2 gap-8 mb-8 max-w-4xl">
+              <div>
                 <h3 className="font-semibold text-[#612665] mb-1">Content</h3>
                 <ul className="space-y-1 text-[#b8a3be]">
                   <li>Introduction to Horizontal Analysis</li>
@@ -302,8 +346,8 @@ const DashboardPage = () => {
                   <li>Computing Increases and Decreases</li>
                 </ul>
               </div>
-              <div className="-ml-80">
-                <h3 className="font-semibold text-[#612665] mb-1 invisible">Content</h3>
+              <div>
+                <h3 className="font-semibold text-[#612665] mb-1">Additional Topics</h3>
                 <ul className="space-y-1 text-[#b8a3be]">
                   <li>Calculating Percentage Changes</li>
                   <li>Why Companies Use Horizontal Analysis</li>
@@ -311,7 +355,7 @@ const DashboardPage = () => {
               </div>
             </div>
             <Link
-              href="/learning/horizontal"
+              href="/learning/horizontal-analysis"
               className="inline-block px-6 py-3 bg-[#612665] text-white rounded-lg hover:bg-[#4d1e51] transition-colors"
             >
               Go to Module
@@ -321,45 +365,48 @@ const DashboardPage = () => {
 
         {/* Leaderboard Section */}
         <div className="mt-12">
-          <h2 className="text-2xl font-bold text-[#612665] mb-4">
+          <h2 className="text-3xl font-bold text-[#612665] mb-4">
             Leaderboard
           </h2>
-          <div className="bg-white rounded-xl border border-[#F3F0F4]">
-            <div className="grid grid-cols-3 p-4 border-b border-[#F3F0F4] font-semibold text-[#612665]">
+          <div className="bg-white rounded-xl border border-[#F3F0F4] max-w-5xl">
+            <div className="grid grid-cols-[2fr_1fr_1fr] p-4 border-b border-[#F3F0F4] font-semibold text-[#612665] text-lg">
               <div>Name</div>
-              <div>Date</div>
+              <div className="pl-4">Date</div>
               <div>Status</div>
             </div>
             {leaderboardData.map((entry) => (
               <div
                 key={entry.id}
-                className="grid grid-cols-3 p-4 border-b border-[#F3F0F4] items-center"
+                className="grid grid-cols-[2fr_1fr_1fr] p-4 border-b border-[#F3F0F4] items-center text-lg hover:bg-[#F3F0F4] transition-colors"
               >
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center gap-4">
                   <Image
                     src={entry.avatar}
                     alt={entry.name}
-                    width={32}
-                    height={32}
+                    width={40}
+                    height={40}
                     className="rounded-full"
                   />
-                  <span className="text-[#612665]">{entry.name}</span>
+                  <span className="text-[#612665] font-medium">{entry.name}</span>
                 </div>
-                <div className="text-[#b8a3be]">{entry.date}</div>
+                <div className="text-[#b8a3be] pl-4">{entry.date}</div>
                 <div>
                   {entry.status === "Completed" && (
-                    <span className="text-green-500 flex items-center">
-                      Completed <span className="ml-2">✓</span>
+                    <span className="text-green-500 flex items-center font-medium">
+                      <span className="w-2 h-2 rounded-full bg-green-500 mr-2"></span>
+                      Completed
                     </span>
                   )}
                   {entry.status === "Incomplete" && (
-                    <span className="text-red-500 flex items-center">
-                      Incomplete <span className="ml-2">✗</span>
+                    <span className="text-red-500 flex items-center font-medium">
+                      <span className="w-2 h-2 rounded-full bg-red-500 mr-2"></span>
+                      Incomplete
                     </span>
                   )}
                   {entry.status === "In Progress" && (
-                    <span className="text-blue-500 flex items-center">
-                      In Progress <span className="ml-2">⋯</span>
+                    <span className="text-blue-500 flex items-center font-medium">
+                      <span className="w-2 h-2 rounded-full bg-blue-500 mr-2"></span>
+                      In Progress
                     </span>
                   )}
                 </div>

@@ -8,9 +8,6 @@ importers:
 
   .:
     dependencies:
-      '@types/pdfjs-dist':
-        specifier: ^2.10.378
-        version: 2.10.378
       next:
         specifier: 15.1.6
         version: 15.1.6(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
@@ -33,6 +30,9 @@ importers:
       '@types/node':
         specifier: ^20
         version: 20.17.17
+      '@types/pdfjs-dist':
+        specifier: ^2.10.378
+        version: 2.10.378
       '@types/react':
         specifier: ^19
         version: 19.0.8

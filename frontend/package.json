@@ -9,7 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@types/pdfjs-dist": "^2.10.378",
     "next": "15.1.6",
     "pdfjs-dist": "^4.10.38",
     "react": "^19.0.0",
@@ -19,6 +18,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@types/node": "^20",
+    "@types/pdfjs-dist": "^2.10.378",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

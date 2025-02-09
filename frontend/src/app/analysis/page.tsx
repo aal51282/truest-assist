@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import ProtectedRoute from "@/components/ProtectedRoute";
+// import ProtectedRoute from "@/components/ProtectedRoute";
 
 const AnalysisPage = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -63,7 +63,7 @@ const AnalysisPage = () => {
   };
 
   return (
-    <ProtectedRoute>
+    // <ProtectedRoute>
       <div className="min-h-screen bg-white p-8">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-2 gap-8">
@@ -196,7 +196,7 @@ const AnalysisPage = () => {
           </div>
         </div>
       </div>
-    </ProtectedRoute>
+    // </ProtectedRoute>
   );
 };
 

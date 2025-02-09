@@ -5,7 +5,7 @@ import Link from "next/link";
 import { getQuizQuestions } from "@/data/transcripts/balance-sheet";
 import ReactConfetti from 'react-confetti';
 import { useRouter } from "next/navigation";
-import ProtectedRoute from "@/components/ProtectedRoute";
+// import ProtectedRoute from "@/components/ProtectedRoute";
 
 // YouTube IFrame API TypeScript declarations
 declare global {
@@ -436,7 +436,7 @@ const BalanceSheetPage = () => {
   };
 
   return (
-    <ProtectedRoute>
+    // <ProtectedRoute>
       <div className="min-h-screen bg-white p-8">
         {showCelebration && (
           <ReactConfetti
@@ -647,7 +647,7 @@ const BalanceSheetPage = () => {
           </div>
         </div>
       </div>
-    </ProtectedRoute>
+    // </ProtectedRoute>
   );
 };
 

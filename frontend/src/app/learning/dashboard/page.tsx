@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface LeaderboardEntry {
   id: number;
@@ -22,6 +23,8 @@ interface Module {
 const DashboardPage = () => {
   const [selectedModule, setSelectedModule] = useState<string>("balance-sheet");
   const [playerRef, setPlayerRef] = useState<YT.Player | null>(null);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const router = useRouter();
 
   const modules: Module[] = [
     {
@@ -127,6 +130,13 @@ const DashboardPage = () => {
     }
   ];
 
+  const handleLogout = () => {
+    // Close the modal
+    setShowLogoutModal(false);
+    // Redirect to splash page
+    router.push('/splash');
+  };
+
   return (
     <div className="flex min-h-screen bg-white">
       {/* Sidebar */}
@@ -191,10 +201,13 @@ const DashboardPage = () => {
             <span className="mr-2">⚙️</span>
             Settings
           </Link>
-          <Link href="/logout" className="flex items-center text-[#b8a3be] hover:text-[#612665]">
+          <button 
+            onClick={() => setShowLogoutModal(true)} 
+            className="flex items-center text-[#b8a3be] hover:text-[#612665] w-full text-left"
+          >
             <span className="mr-2">🚪</span>
             Logout
-          </Link>
+          </button>
           <div className="text-xs text-[#b8a3be] mt-4">
             Need Help? <Link href="/help" className="text-[#612665]">Ask TrustBot</Link>
           </div>
@@ -351,6 +364,30 @@ const DashboardPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Logout Confirmation Modal */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-xl max-w-md w-full mx-4 shadow-2xl">
+            <h2 className="text-2xl font-bold text-[#612665] mb-4">Confirm Logout</h2>
+            <p className="text-[#b8a3be] mb-6">Are you sure you want to logout?</p>
+            <div className="flex gap-4">
+              <button
+                onClick={handleLogout}
+                className="flex-1 py-3 px-4 bg-[#612665] text-white rounded-lg hover:bg-[#4d1e51] transition-colors"
+              >
+                Yes, Logout
+              </button>
+              <button
+                onClick={() => setShowLogoutModal(false)}
+                className="flex-1 py-3 px-4 border-2 border-[#612665] text-[#612665] rounded-lg hover:bg-[#F3F0F4] transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

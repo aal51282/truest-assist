@@ -4,6 +4,40 @@ A gamified platform that engages employees and individuals in understanding and 
 
 # Members - Helen Belete, Angel Loaiza, Dinesha Shair, Lilian Valdes
 
+## EL Credit for Angel Loaiza (Summary of Project Log)
+
+Tier Level: Advanced
+
+Friday - Project Planning
+Goals: Build an AI-powered application and align with the hackathon's theme.
+Progress:
+Narrowed down project ideas to Truist’s Gamify Challenge.
+Assigned tasks: UI design in Figma, backend setup, researching LLM APIs.
+Challenges:
+Lacked financial expertise → Used AI to generate content.
+Ensuring gamification was meaningful → Added achievements, badges, and confetti effects.
+Learning: Gamification improves retention, and AI tools like Groq can assist in content generation.
+
+Saturday - Development Phase
+Goals: Complete most of the project, fully integrate two AI models, finalize UI.
+Progress:
+Developed sleek UI and connected authentication (MongoDB).
+Implemented Groq AI to generate quiz questions dynamically.
+Created AI-generated quizzes embedded in videos.
+Worked on the analysis page UI and prepared the submission (Devpost, video, slides).
+Challenges:
+Keeping UI simple yet engaging → Used video modules with pop-up AI quizzes.
+Ensuring AI-generated questions were relevant to video sections → Considered breaking transcripts into smaller segments but lacked time.
+Learning: Gained experience in frontend development, video integration, and AI-powered dynamic quizzes.
+
+Sunday - Finalization & Submission
+Goals: Complete slide deck, deploy project, and refine the pitch.
+Progress:
+Finalized Figma, slide deck, and demo video.
+Submitted project to Devpost and prepared for judging.
+Challenges:
+Deployment concerns → Prioritized stability over last-minute changes.
+
 ## 🎯 Overview
 
 Truest Assist transforms complex financial analysis into an engaging, game-like experience. Users can learn about financial metrics, analyze real company data, and earn rewards while building their financial acumen.

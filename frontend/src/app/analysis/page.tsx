@@ -12,7 +12,8 @@ const AnalysisPage = () => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [companyImageUrl, setCompanyImageUrl] = useState<string>("/walmart.png");
+  const [companyImageUrl, setCompanyImageUrl] =
+    useState<string>("/walmart.png");
   const [hoveredLeft, setHoveredLeft] = useState(false);
   const [hoveredRight, setHoveredRight] = useState(false);
 
@@ -20,7 +21,7 @@ const AnalysisPage = () => {
   const companyPdfs = [
     { name: "Walmart", url: "/walmart.png" },
     { name: "Amazon", url: "/amazon.png" },
-    { name: "Apple", url: "/apple.png" }
+    { name: "Apple", url: "/apple.png" },
   ];
 
   const handleFileSelect = async (
@@ -222,11 +223,20 @@ const AnalysisPage = () => {
                         here
                       </div>
                     )}
-                    
+
                     {/* Hover action overlay */}
-                    <div className={`absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-200 rounded-lg ${hoveredLeft ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                    <div
+                      className={`absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-200 rounded-lg ${
+                        hoveredLeft
+                          ? "opacity-100"
+                          : "opacity-0 pointer-events-none"
+                      }`}
+                    >
                       <div className="text-center">
-                        <label htmlFor="your-file-upload" className="bg-white text-[#612665] font-semibold px-6 py-3 rounded-full hover:bg-gray-100 transition-colors cursor-pointer inline-block">
+                        <label
+                          htmlFor="your-file-upload"
+                          className="bg-white text-[#612665] font-semibold px-6 py-3 rounded-full hover:bg-gray-100 transition-colors cursor-pointer inline-block"
+                        >
                           Change Your Balance Sheet
                         </label>
                         <input
@@ -264,9 +274,15 @@ const AnalysisPage = () => {
                         quality={100}
                       />
                     </div>
-                    
+
                     {/* Hover action overlay */}
-                    <div className={`absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-200 rounded-lg ${hoveredRight ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                    <div
+                      className={`absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 transition-opacity duration-200 rounded-lg ${
+                        hoveredRight
+                          ? "opacity-100"
+                          : "opacity-0 pointer-events-none"
+                      }`}
+                    >
                       <div className="text-center space-y-4">
                         <div className="flex gap-2 justify-center mb-4">
                           {companyPdfs.map((pdf) => (
@@ -280,7 +296,10 @@ const AnalysisPage = () => {
                           ))}
                         </div>
                         <div>
-                          <label htmlFor="company-file-upload" className="bg-white text-[#612665] font-semibold px-6 py-3 rounded-full hover:bg-gray-100 transition-colors cursor-pointer inline-block">
+                          <label
+                            htmlFor="company-file-upload"
+                            className="bg-white text-[#612665] font-semibold px-6 py-3 rounded-full hover:bg-gray-100 transition-colors cursor-pointer inline-block"
+                          >
                             Upload Custom PDF
                           </label>
                           <input
@@ -293,68 +312,6 @@ const AnalysisPage = () => {
                         </div>
                       </div>
                     </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Text Sections */}
-              <div className="grid grid-cols-2 gap-6">
-                {/* Advice Section */}
-                <div>
-                  <h3 className="text-lg font-semibold text-[#612665] mb-4">
-                    Advice
-                  </h3>
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="font-medium text-[#612665]">
-                        Asset Utilization & Liquidity
-                      </h4>
-                      <p className="text-gray-600">
-                        Personal Finance: Keep a balance between liquid assets
-                        (cash, savings) and investments for long-term growth.
-                      </p>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-[#612665]">
-                        Investment Growth & Diversification
-                      </h4>
-                      <p className="text-gray-600">
-                        Personal Finance: Consider diversifying your portfolio
-                        (investments, side businesses) to increase financial
-                        stability.
-                      </p>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-[#612665]">
-                        Long-Term vs. Short-Term Planning
-                      </h4>
-                      <p className="text-gray-600">
-                        Personal Finance: Plan for long-term financial goals
-                        while managing short-term needs.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Current Practices Section */}
-                <div>
-                  <h3 className="text-lg font-semibold text-[#612665] mb-4">
-                    Current Practices
-                  </h3>
-                  <div className="space-y-4">
-                    <p className="text-gray-600">
-                      Walmart manages inventory efficiently by minimizing excess
-                      stock while ensuring products are available when needed.
-                    </p>
-                    <p className="text-gray-600">
-                      Expands revenue through e-commerce, retail locations, and
-                      credit cards.
-                    </p>
-                    <p className="text-gray-600">
-                      Walmart balances short-term operational efficiency with
-                      long-term strategic investments in technology and
-                      sustainability.
-                    </p>
                   </div>
                 </div>
               </div>

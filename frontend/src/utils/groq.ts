@@ -1,4 +1,4 @@
-import Groq from 'groq-sdk';
+import Groq from "groq-sdk";
 
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
@@ -26,21 +26,25 @@ function convertTimestampToSeconds(timestamp: string): number {
   return parseInt(minutes) * 60 + parseInt(seconds);
 }
 
-export async function generateQuizFromTranscript(transcript: string): Promise<Quiz[]> {
+export async function generateQuizFromTranscript(
+  transcript: string
+): Promise<Quiz[]> {
   // First, parse the transcript to find natural break points
   const timestampMatches = transcript.match(/\[\d{2}:\d{2}\]/g) || [];
   const timestamps = timestampMatches
     .map(convertTimestampToSeconds)
-    .filter(timestamp => timestamp < VIDEO_LENGTH_SECONDS); // Filter out timestamps beyond video length
+    .filter((timestamp) => timestamp < VIDEO_LENGTH_SECONDS); // Filter out timestamps beyond video length
 
   const prompt = `
     You are an expert financial educator creating interactive video quizzes. Given the following video transcript, create unique and engaging quizzes that will appear at specific timestamps.
     
     The video has natural breaks at the following timestamps (in seconds):
-    ${timestamps.join(', ')}
+    ${timestamps.join(", ")}
     
     Requirements for the quizzes:
-    1. Create exactly one quiz for each of these timestamps: ${timestamps.slice(1).join(', ')} seconds
+    1. Create exactly one quiz for each of these timestamps: ${timestamps
+      .slice(1)
+      .join(", ")} seconds
     2. Each quiz should have EXACTLY 3 multiple choice questions about the content covered since the previous timestamp
     3. Questions should test comprehension and critical thinking, not just recall
     4. Provide 4 clear and distinct options for each question
@@ -78,11 +82,11 @@ export async function generateQuizFromTranscript(transcript: string): Promise<Qu
     const completion = await groq.chat.completions.create({
       messages: [
         {
-          role: 'user',
+          role: "user",
           content: prompt,
         },
       ],
-      model: 'mixtral-8x7b-32768',
+      model: "llama3-8b-8192",
       temperature: 0.9, // Increased for more variety
       max_tokens: 4096,
       top_p: 0.9,
@@ -92,33 +96,34 @@ export async function generateQuizFromTranscript(transcript: string): Promise<Qu
 
     const response = completion.choices[0]?.message?.content;
     if (!response) {
-      throw new Error('No response from GROQ');
+      throw new Error("No response from GROQ");
     }
 
     // Extract the JSON from the response and validate its structure
     const jsonMatch = response.match(/\[[\s\S]*\]/);
     if (!jsonMatch) {
-      throw new Error('No valid JSON found in response');
+      throw new Error("No valid JSON found in response");
     }
 
     const quizzes = JSON.parse(jsonMatch[0]) as Quiz[];
-    
+
     // Validate quiz structure and ensure exactly 3 questions
     if (!Array.isArray(quizzes) || quizzes.length === 0) {
-      throw new Error('Invalid quiz structure');
+      throw new Error("Invalid quiz structure");
     }
 
     // Ensure each quiz has exactly 3 questions
-    const validQuizzes = quizzes.filter(quiz => 
-      timestamps.includes(quiz.timestamp) && 
-      quiz.timestamp < VIDEO_LENGTH_SECONDS &&
-      quiz.questions.length === 3
+    const validQuizzes = quizzes.filter(
+      (quiz) =>
+        timestamps.includes(quiz.timestamp) &&
+        quiz.timestamp < VIDEO_LENGTH_SECONDS &&
+        quiz.questions.length === 3
     );
 
     // Sort quizzes by timestamp
     return validQuizzes.sort((a, b) => a.timestamp - b.timestamp);
   } catch (error) {
-    console.error('Error generating quiz:', error);
+    console.error("Error generating quiz:", error);
     throw error;
   }
-} 
+}

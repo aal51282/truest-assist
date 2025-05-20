@@ -165,9 +165,24 @@ const AnalysisPage = () => {
               {selectedFile && !error && (
                 <button
                   onClick={handleContinue}
-                  className="mt-8 w-full bg-[#612665] text-white py-3 rounded-lg hover:bg-[#4d1e51] transition-colors text-lg"
+                  className="mt-8 w-full bg-gradient-to-r from-[#f5b142] to-[#e09415] text-white py-5 rounded-xl hover:from-[#ffbb33] hover:to-[#ff9500] transition-all duration-300 text-lg font-semibold flex items-center justify-center space-x-3 shadow-md shadow-amber-100/30 transform hover:scale-105 animate-pulse-subtle relative overflow-hidden group"
                 >
-                  Continue
+                  <div className="absolute inset-0 bg-gradient-to-r from-yellow-300/40 via-transparent to-transparent w-1/2 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-7 w-7"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                    />
+                  </svg>
+                  <span className="tracking-wide">Analyze Balance Sheets</span>
                 </button>
               )}
             </div>

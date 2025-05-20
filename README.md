@@ -100,7 +100,11 @@ pnpm install
 
 4. Set up environment variables
 ```bash
-cp frontend/.env.example frontend/.env
+frontend/.env.example
+frontend/.env
+
+https://www.mongodb.com/
+https://console.groq.com/keys
 ```
 
 5. Start development servers

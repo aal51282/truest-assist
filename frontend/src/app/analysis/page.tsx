@@ -3,7 +3,201 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  RadialLinearScale,
+  PointElement,
+  LineElement,
+  ArcElement,
+} from "chart.js";
+import { Bar, Radar, Doughnut } from "react-chartjs-2";
 // import ProtectedRoute from "@/components/ProtectedRoute";
+
+// Register Chart.js components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  RadialLinearScale,
+  PointElement,
+  LineElement,
+  ArcElement
+);
+
+// Chart component types
+type ChartData = {
+  labels: string[];
+  userValues: number[];
+  companyValues: number[];
+  ratioNames: string[];
+  userRatios: number[];
+  companyRatios: number[];
+};
+
+// Chart component for assets comparison
+const AssetsComparisonChart = ({ chartData }: { chartData: ChartData }) => {
+  const data = {
+    labels: chartData.labels,
+    datasets: [
+      {
+        label: "Your Company",
+        data: chartData.userValues,
+        backgroundColor: "rgba(97, 38, 101, 0.7)",
+        borderColor: "rgba(97, 38, 101, 1)",
+        borderWidth: 1,
+      },
+      {
+        label: "Comparison Company",
+        data: chartData.companyValues,
+        backgroundColor: "rgba(245, 177, 66, 0.7)",
+        borderColor: "rgba(245, 177, 66, 1)",
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  const options = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: "top" as const,
+      },
+      title: {
+        display: true,
+        text: "Asset Distribution Comparison",
+        color: "#612665",
+        font: {
+          size: 16,
+          weight: "bold" as const,
+        },
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+      },
+    },
+  };
+
+  return <Bar data={data} options={options} />;
+};
+
+// Chart component for financial ratios radar
+const RatiosRadarChart = ({ chartData }: { chartData: ChartData }) => {
+  const data = {
+    labels: chartData.ratioNames,
+    datasets: [
+      {
+        label: "Your Company",
+        data: chartData.userRatios,
+        backgroundColor: "rgba(97, 38, 101, 0.2)",
+        borderColor: "rgba(97, 38, 101, 0.8)",
+        borderWidth: 2,
+        pointBackgroundColor: "rgba(97, 38, 101, 1)",
+      },
+      {
+        label: "Comparison Company",
+        data: chartData.companyRatios,
+        backgroundColor: "rgba(245, 177, 66, 0.2)",
+        borderColor: "rgba(245, 177, 66, 0.8)",
+        borderWidth: 2,
+        pointBackgroundColor: "rgba(245, 177, 66, 1)",
+      },
+    ],
+  };
+
+  const options = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: "top" as const,
+      },
+      title: {
+        display: true,
+        text: "Financial Ratios Comparison",
+        color: "#612665",
+        font: {
+          size: 16,
+          weight: "bold" as const,
+        },
+      },
+    },
+    scales: {
+      r: {
+        angleLines: {
+          display: true,
+        },
+        ticks: {
+          callback: function (tickValue: number | string) {
+            // Convert to number then format (handles both string and number inputs)
+            const value =
+              typeof tickValue === "string" ? parseFloat(tickValue) : tickValue;
+            return value.toFixed(2);
+          },
+        },
+      },
+    },
+  };
+
+  return <Radar data={data} options={options} />;
+};
+
+// Chart component for composition
+const CompositionDonutChart = ({ chartData }: { chartData: ChartData }) => {
+  const data = {
+    labels: chartData.labels,
+    datasets: [
+      {
+        label: "Asset Composition",
+        data: chartData.userValues,
+        backgroundColor: [
+          "rgba(97, 38, 101, 0.7)",
+          "rgba(127, 58, 131, 0.7)",
+          "rgba(157, 78, 161, 0.7)",
+          "rgba(187, 108, 191, 0.7)",
+          "rgba(217, 138, 221, 0.7)",
+        ],
+        borderColor: [
+          "rgba(97, 38, 101, 1)",
+          "rgba(127, 58, 131, 1)",
+          "rgba(157, 78, 161, 1)",
+          "rgba(187, 108, 191, 1)",
+          "rgba(217, 138, 221, 1)",
+        ],
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  const options = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: "right" as const,
+      },
+      title: {
+        display: true,
+        text: "Your Asset Composition",
+        color: "#612665",
+        font: {
+          size: 16,
+          weight: "bold" as const,
+        },
+      },
+    },
+  };
+
+  return <Doughnut data={data} options={options} />;
+};
 
 const AnalysisPage = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -21,6 +215,7 @@ const AnalysisPage = () => {
   const [analyzeProgress, setAnalyzeProgress] = useState<string>(
     "Starting analysis..."
   );
+  const [chartData, setChartData] = useState<ChartData | null>(null);
 
   const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
@@ -122,6 +317,7 @@ const AnalysisPage = () => {
     setIsAnalyzing(true);
     setAnalysisResult(null);
     setError(null); // Clear any previous errors
+    setChartData(null); // Clear any previous chart data
 
     // Set up a loading message sequence
     setAnalyzeProgress("Starting analysis...");
@@ -130,6 +326,7 @@ const AnalysisPage = () => {
       "Analyzing financial ratios...",
       "Comparing balance sheets...",
       "Generating recommendations...",
+      "Creating visualizations...",
       "Finalizing analysis...",
     ];
 
@@ -174,6 +371,11 @@ const AnalysisPage = () => {
       }
 
       setAnalysisResult(data.analysis);
+
+      // Set chart data if available
+      if (data.chartData) {
+        setChartData(data.chartData);
+      }
     } catch (error: unknown) {
       console.error("Error analyzing balance sheets:", error);
       const errorMessage =
@@ -422,6 +624,22 @@ const AnalysisPage = () => {
             <h2 className="text-2xl font-bold text-[#612665] mb-6">
               Comparative Analysis
             </h2>
+
+            {/* Charts Section - Show when chartData is available */}
+            {chartData && (
+              <div className="mb-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <AssetsComparisonChart chartData={chartData} />
+                </div>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <RatiosRadarChart chartData={chartData} />
+                </div>
+                <div className="bg-gray-50 p-4 rounded-lg lg:col-span-2">
+                  <CompositionDonutChart chartData={chartData} />
+                </div>
+              </div>
+            )}
+
             <div className="flex flex-col gap-6">
               {/* Image Containers - Side by Side */}
               <div className="grid grid-cols-2 gap-6">
